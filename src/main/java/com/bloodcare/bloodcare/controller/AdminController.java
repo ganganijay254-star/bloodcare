@@ -12,7 +12,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
 import com.bloodcare.bloodcare.entity.Admin;
@@ -136,8 +141,20 @@ public class AdminController {
                     .body("Invalid admin credentials");
         }
 
+        // Start with a clean session so an old user session cannot interfere with admin requests.
+        session.removeAttribute("user");
         admin.setPassword(null);
         session.setAttribute("admin", admin);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        admin.getEmail(),
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
 
         return ResponseEntity.ok(admin);
     }
@@ -164,6 +181,8 @@ public class AdminController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpSession session) {
         session.removeAttribute("admin");
+        session.removeAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
+        SecurityContextHolder.clearContext();
         return ResponseEntity.ok("Logged out");
     }
 

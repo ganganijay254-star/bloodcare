@@ -268,6 +268,19 @@ if (typeof window.showToast === 'undefined') {
   }
 }
 
+function parseAdminJsonResponse(res) {
+  if (res.status === 401 || res.status === 403) {
+    showLoader(false);
+    showLogin();
+    showToast("Admin session expired. Please login again.", "error");
+    throw new Error("Admin session expired");
+  }
+  if (!res.ok) {
+    throw new Error("Request failed");
+  }
+  return res.json();
+}
+
 /* ================= SESSION CHECK ================= */
 function checkAdminSession() {
   showLoader(true);
@@ -388,7 +401,7 @@ function setupNavigation() {
 /* ================= HOSPITALS ================= */
 function loadHospitalsAdmin() {
   fetch("/api/admin/hospitals", { credentials: "include" })
-    .then(res => res.ok ? res.json() : [])
+    .then(parseAdminJsonResponse)
     .then(data => {
       const tbody = document.getElementById("hospitalTableBody");
       const bloodBankHospitalSelect = document.getElementById("bloodBankHospitalSelect");
@@ -464,7 +477,7 @@ document.addEventListener("DOMContentLoaded", () => {
 /* ================= BLOOD BANKS ================= */
 function loadBloodBanksAdmin() {
   fetch("/api/admin/blood-banks", { credentials: "include" })
-    .then(res => res.ok ? res.json() : [])
+    .then(parseAdminJsonResponse)
     .then(data => {
       const tbody = document.getElementById("bloodBankTableBody");
       const stockSelect = document.getElementById("bloodStockBankSelect");
@@ -517,7 +530,7 @@ function saveBloodBank() {
 /* ================= BLOOD STOCKS ================= */
 function loadBloodStocksAdmin() {
   fetch("/api/admin/blood-stocks", { credentials: "include" })
-    .then(res => res.ok ? res.json() : [])
+    .then(parseAdminJsonResponse)
     .then(data => {
       const tbody = document.getElementById("bloodStockTableBody");
       if (!tbody) return;
@@ -668,7 +681,7 @@ function loadDonors() {
 function loadAllRequests() {
   showLoader(true);
   fetch("/api/admin/visits", { credentials: "include" })
-    .then(res => res.json())
+    .then(parseAdminJsonResponse)
     .then(data => {
       showLoader(false);
 
@@ -734,10 +747,7 @@ function loadAllRequests() {
 /* ================= BLOOD STOCK OVERVIEW ================= */
 function loadBloodStockOverview() {
   fetch("/api/admin/blood-stock-overview", { credentials: "include" })
-    .then(res => {
-      if (!res.ok) return null;
-      return res.json();
-    })
+    .then(parseAdminJsonResponse)
     .then(data => {
       if (!data) return;
       setMetricValue("lowStockCount", data.lowStockCount ?? 0);
@@ -749,7 +759,7 @@ function loadBloodStockOverview() {
 
 function loadAdminInsights() {
   fetch("/api/admin/dashboard-insights", { credentials: "include" })
-    .then(res => (res.ok ? res.json() : null))
+    .then(parseAdminJsonResponse)
     .then(data => {
       if (!data) return;
 
@@ -872,7 +882,7 @@ function renderShortageList(items) {
 function loadReceiverRequests() {
   showLoader(true);
   fetch("/api/admin/receiver-requests", { credentials: "include" })
-    .then(res => res.json())
+    .then(parseAdminJsonResponse)
     .then(data => {
       showLoader(false);
 
@@ -1074,7 +1084,7 @@ function setupLogout() {
 /* ================= ADMIN SETTINGS ================= */
 function loadAdminSettings() {
   fetch("/api/admin/settings", { credentials: "include" })
-    .then(res => res.json())
+    .then(parseAdminJsonResponse)
     .then(settings => {
       document.getElementById("pointsPerUnit").value = settings.pointsPerUnit || 100;
       document.getElementById("bonusPerDonation").value = settings.bonusPerDonation || 200;
@@ -1092,7 +1102,7 @@ function loadAdminSettings() {
   
   // Load user panel controls
   fetch("/api/admin/controls", { credentials: "include" })
-    .then(res => res.json())
+    .then(parseAdminJsonResponse)
     .then(controls => {
       document.getElementById("showDonorProfile").checked = controls.showDonorProfile !== false;
       document.getElementById("showBloodRequest").checked = controls.showBloodRequest !== false;
