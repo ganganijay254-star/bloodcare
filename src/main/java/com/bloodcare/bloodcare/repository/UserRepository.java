@@ -8,6 +8,7 @@ import com.bloodcare.bloodcare.entity.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     User findByEmail(String email);
+    User findByMobile(String mobile);
 
 	User findByResetToken(String token);
 }

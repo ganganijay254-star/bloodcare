@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -138,7 +139,21 @@ public class UserController {
                 user.setName(updates.get("name"));
             }
             if (updates.containsKey("mobile")) {
-                user.setMobile(updates.get("mobile"));
+                String mobile = normalizeMobile(updates.get("mobile"));
+                if (mobile == null) {
+                    response.put("success", false);
+                    response.put("message", "Mobile number must be exactly 10 digits");
+                    return ResponseEntity.badRequest().body(response);
+                }
+
+                User existingUser = userRepository.findByMobile(mobile);
+                if (existingUser != null && !existingUser.getId().equals(user.getId())) {
+                    response.put("success", false);
+                    response.put("message", "Mobile number already exists");
+                    return ResponseEntity.status(409).body(response);
+                }
+
+                user.setMobile(mobile);
             }
             
             User updated = userRepository.save(user);
@@ -151,6 +166,10 @@ public class UserController {
             response.put("user", updated);
             
             return ResponseEntity.ok(response);
+        } catch (DataIntegrityViolationException e) {
+            response.put("success", false);
+            response.put("message", "Mobile number already exists");
+            return ResponseEntity.status(409).body(response);
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error updating profile: " + e.getMessage());
@@ -186,5 +205,14 @@ public class UserController {
             response.put("message", "Error fetching profile");
             return ResponseEntity.status(500).body(response);
         }
+    }
+
+    private String normalizeMobile(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String digitsOnly = value.replaceAll("\\D", "");
+        return digitsOnly.matches("\\d{10}") ? digitsOnly : null;
     }
 }

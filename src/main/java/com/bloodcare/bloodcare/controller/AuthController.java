@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -36,16 +37,48 @@ public class AuthController {
     ===================== */
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody User user) {
+        String email = normalizeEmail(user.getEmail());
+        String mobile = normalizeMobile(user.getMobile());
+        String password = user.getPassword();
 
-        if (userRepository.findByEmail(user.getEmail()) != null) {
+        if (user.getName() == null || user.getName().trim().length() < 3) {
+            return ResponseEntity.badRequest().body(message("Please enter a valid full name"));
+        }
+
+        if (email == null) {
+            return ResponseEntity.badRequest().body(message("Please enter a valid email address"));
+        }
+
+        if (mobile == null) {
+            return ResponseEntity.badRequest().body(message("Mobile number must be exactly 10 digits"));
+        }
+
+        if (password == null || password.isBlank()) {
+            return ResponseEntity.badRequest().body(message("Password is required"));
+        }
+
+        if (userRepository.findByEmail(email) != null) {
             return ResponseEntity.status(409).body(message("Email already exists"));
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        User savedUser = userRepository.save(user);
-        savedUser.setPassword(null);
+        if (userRepository.findByMobile(mobile) != null) {
+            return ResponseEntity.status(409).body(message("Mobile number already exists"));
+        }
 
-        return ResponseEntity.ok(savedUser);
+        user.setName(user.getName().trim());
+        user.setEmail(email);
+        user.setMobile(mobile);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole((user.getRole() == null || user.getRole().isBlank()) ? "USER" : user.getRole().trim().toUpperCase());
+
+        try {
+            User savedUser = userRepository.save(user);
+            savedUser.setPassword(null);
+
+            return ResponseEntity.ok(savedUser);
+        } catch (DataIntegrityViolationException ex) {
+            return ResponseEntity.status(409).body(message("Mobile number already exists"));
+        }
     }
 
     /* =====================
@@ -196,5 +229,23 @@ public class AuthController {
         Map<String, String> response = new LinkedHashMap<>();
         response.put("message", value);
         return response;
+    }
+
+    private String normalizeEmail(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String normalized = value.trim().toLowerCase();
+        return normalized.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$") ? normalized : null;
+    }
+
+    private String normalizeMobile(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String digitsOnly = value.replaceAll("\\D", "");
+        return digitsOnly.matches("\\d{10}") ? digitsOnly : null;
     }
 }
