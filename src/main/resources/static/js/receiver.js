@@ -232,7 +232,7 @@ function validatePayload(payload) {
   if (!payload.hospital) return "Please select hospital";
   if (!payload.patientName || payload.patientName.trim().length < 2) return "Please enter patient name";
   if (!payload.bloodGroup) return "Please select blood group";
-  if (!payload.city || payload.city.trim().length < 2) return "Please enter city";
+  if (!payload.city || payload.city.trim().length < 2) return "Please select city";
   if (!/^[0-9]{10}$/.test(payload.contactNumber)) return "Please enter a valid 10 digit contact number";
   if (!Number.isFinite(payload.unitsRequired) || payload.unitsRequired <= 0) return "Please enter valid units";
   if (payload.requiredDate && payload.requiredDate < todayDateValue()) return "Past date cannot be selected";

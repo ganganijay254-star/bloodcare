@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,32 +24,54 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            HttpSession session = request.getSession(false);
-            if (session != null) {
-                Admin admin = (Admin) session.getAttribute("admin");
-                if (admin != null) {
-                    List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
-                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                            admin.getEmail(), null, authorities);
-                    SecurityContextHolder.getContext().setAuthentication(auth);
-                } else {
-                    User user = (User) session.getAttribute("user");
-                    if (user != null) {
-                        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-                        String role = user.getRole();
-                        if (role == null || role.isBlank()) {
-                            role = "USER";
-                        }
-                        authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
-                        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                                user.getEmail(), null, authorities);
-                        SecurityContextHolder.getContext().setAuthentication(auth);
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            Admin admin = (Admin) session.getAttribute("admin");
+            if (admin != null) {
+                setAuthenticationIfNeeded(
+                        admin.getEmail(),
+                        List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+            } else {
+                User user = (User) session.getAttribute("user");
+                if (user != null) {
+                    List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                    String role = user.getRole();
+                    if (role == null || role.isBlank()) {
+                        role = "USER";
                     }
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                    setAuthenticationIfNeeded(user.getEmail(), authorities);
                 }
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void setAuthenticationIfNeeded(String principal, List<SimpleGrantedAuthority> authorities) {
+        Authentication current = SecurityContextHolder.getContext().getAuthentication();
+        if (samePrincipalWithAuthorities(current, principal, authorities)) {
+            return;
+        }
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                principal, null, authorities);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    private boolean samePrincipalWithAuthorities(Authentication current,
+                                                 String principal,
+                                                 List<SimpleGrantedAuthority> authorities) {
+        if (current == null || !current.isAuthenticated()) {
+            return false;
+        }
+
+        Object currentPrincipal = current.getPrincipal();
+        if (currentPrincipal == null || !principal.equals(String.valueOf(currentPrincipal))) {
+            return false;
+        }
+
+        return current.getAuthorities().containsAll(authorities)
+                && current.getAuthorities().size() == authorities.size();
     }
 }

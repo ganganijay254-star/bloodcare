@@ -104,7 +104,7 @@ public class SmartEligibilityCheckerService {
                     info.put("notified", true);
                 } catch (Exception ex) {
                     info.put("notified", false);
-                    info.put("notifyError", ex.getMessage());
+                    info.put("notifyError", emailService.describeEmailFailure(ex));
                 }
             } else {
                 info.put("notified", false);
@@ -161,7 +161,7 @@ public class SmartEligibilityCheckerService {
                 info.put("notified", true);
             } catch (Exception ex) {
                 info.put("notified", false);
-                info.put("notifyError", ex.getMessage());
+                info.put("notifyError", emailService.describeEmailFailure(ex));
             }
 
             results.add(info);
