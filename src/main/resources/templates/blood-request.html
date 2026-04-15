@@ -342,7 +342,7 @@
             <!-- Contact Number -->
             <div class="form-group">
                 <label>📞 Contact Number *</label>
-                <input type="tel" id="contactNumber" required placeholder="Your contact number">
+                <input type="tel" id="contactNumber" required maxlength="10" inputmode="numeric" pattern="[0-9]{10}" placeholder="Your contact number">
             </div>
 
             <!-- Description -->
@@ -363,6 +363,13 @@
 <script>
     document.getElementById('bloodRequestForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        const contactInput = document.getElementById('contactNumber');
+        contactInput.value = contactInput.value.replace(/[^0-9]/g, '').slice(0, 10);
+        if (!/^[0-9]{10}$/.test(contactInput.value)) {
+            if (typeof localShow === 'function') localShow('Please enter a valid 10 digit contact number', 'error'); else alert('Please enter a valid 10 digit contact number');
+            return;
+        }
 
         const request = {
             patientName: document.getElementById('patientName').value,
@@ -396,6 +403,10 @@
         } catch (error) {
             if (typeof localShow === 'function') localShow('Error: ' + error.message, 'error'); else alert('Error: ' + error.message);
         }
+    });
+
+    document.getElementById('contactNumber').addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
     });
 
     // Get blood group from URL param if needed

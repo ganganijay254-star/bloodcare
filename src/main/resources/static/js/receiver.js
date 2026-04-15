@@ -17,8 +17,11 @@ const compatibilityText = document.getElementById("compatibilityText");
 const compatibilityPills = document.getElementById("compatibilityPills");
 const urgentNeededBtn = document.getElementById("urgentNeededBtn");
 const emergencyBanner = document.getElementById("emergencyBanner");
+const urgencyLockNote = document.getElementById("urgencyLockNote");
+const contactNumberInput = document.getElementById("contactNumber");
 let receiverConfig = { settings: {}, controls: {} };
 let emergencyMode = false;
+let emergencyLocked = false;
 let selectedHospital = "";
 
 const compatibility = {
@@ -76,17 +79,26 @@ function updateCompatibilityPanel() {
 
 function syncEmergencyMode(forceCritical = false) {
   const selectedUrgency = (emergencyLevelInput && emergencyLevelInput.value) || "LOW";
-  emergencyMode = forceCritical || selectedUrgency === "CRITICAL";
+  if (forceCritical) {
+    emergencyLocked = true;
+  }
 
-  if (emergencyLevelInput && forceCritical) {
+  emergencyMode = emergencyLocked || selectedUrgency === "CRITICAL";
+
+  if (emergencyLevelInput && (forceCritical || emergencyLocked)) {
     emergencyLevelInput.value = "CRITICAL";
+    emergencyLevelInput.disabled = emergencyLocked;
   }
   if (urgentNeededBtn) {
     urgentNeededBtn.classList.toggle("active", emergencyMode);
-    urgentNeededBtn.innerText = emergencyMode ? "Emergency Mode Enabled" : "Urgent Needed";
+    urgentNeededBtn.innerText = emergencyLocked ? "Emergency Mode Locked" : emergencyMode ? "Emergency Mode Enabled" : "Urgent Needed";
+    urgentNeededBtn.disabled = emergencyLocked;
   }
   if (emergencyBanner) {
     emergencyBanner.classList.toggle("hidden", !emergencyMode);
+  }
+  if (urgencyLockNote) {
+    urgencyLockNote.classList.toggle("hidden", !emergencyLocked);
   }
 }
 
@@ -254,6 +266,12 @@ async function submitMedicalProof(requestId) {
 
 window.getLocation = getLocation;
 
+if (contactNumberInput) {
+  contactNumberInput.addEventListener("input", () => {
+    contactNumberInput.value = contactNumberInput.value.replace(/\D/g, "").slice(0, 10);
+  });
+}
+
 showEligibility();
 ensureHospitalInput();
 loadPublicConfig().then(() => {
@@ -369,7 +387,13 @@ if (bloodGroupInput) {
 }
 
 if (emergencyLevelInput) {
-  emergencyLevelInput.addEventListener("change", () => syncEmergencyMode(false));
+  emergencyLevelInput.addEventListener("change", () => {
+    if (emergencyLocked) {
+      emergencyLevelInput.value = "CRITICAL";
+      return;
+    }
+    syncEmergencyMode(false);
+  });
   syncEmergencyMode(emergencyLevelInput.value === "CRITICAL");
 }
 

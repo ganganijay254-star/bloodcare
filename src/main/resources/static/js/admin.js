@@ -414,6 +414,11 @@ function loadHospitalsAdmin() {
 }
 
 function saveHospital() {
+  const contactInput = document.getElementById("hospitalContactInput");
+  if (contactInput) {
+    contactInput.value = contactInput.value.replace(/\D/g, "").slice(0, 10);
+  }
+
   const payload = {
     name: document.getElementById("hospitalNameInput").value,
     address: document.getElementById("hospitalLocationInput").value,
@@ -421,6 +426,11 @@ function saveHospital() {
     latitude: 0,
     longitude: 0
   };
+
+  if (payload.contact && !/^[0-9]{10}$/.test(payload.contact)) {
+    showToast("Hospital contact must be exactly 10 digits.", "error");
+    return;
+  }
 
   fetch("/api/admin/hospital", {
     method: "POST",
@@ -441,6 +451,15 @@ function saveHospital() {
     })
     .catch(err => showToast(err.message || "Failed to save hospital", "error"));
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const hospitalContactInput = document.getElementById("hospitalContactInput");
+  if (hospitalContactInput) {
+    hospitalContactInput.addEventListener("input", () => {
+      hospitalContactInput.value = hospitalContactInput.value.replace(/\D/g, "").slice(0, 10);
+    });
+  }
+});
 
 /* ================= BLOOD BANKS ================= */
 function loadBloodBanksAdmin() {
@@ -1146,4 +1165,3 @@ function saveAdminSettings() {
     showToast('Settings saved (partial)', 'error');
   });
 }
-

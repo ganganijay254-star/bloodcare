@@ -6,6 +6,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
+* {
+  box-sizing: border-box;
+}
 
 /* ================= GLOBAL ================= */
 body {
@@ -450,6 +453,7 @@ button.action-btn:hover {
   border-radius: 14px;
   padding: 18px;
   box-shadow: 0 10px 24px rgba(15,23,42,.07);
+  min-width: 0;
 }
 
 .settings-card h4 {
@@ -470,20 +474,36 @@ button.action-btn:hover {
   font-size: 13px;
 }
 
-.field input {
+.field input,
+.field select {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
   background: #f8fafc;
   transition: .2s ease;
+  max-width: 100%;
 }
 
-.field input:focus {
+.field input:focus,
+.field select:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59,130,246,.14);
   background: #fff;
+}
+
+.settings-card button {
+  width: 100%;
+}
+
+.table-shell {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-shell table {
+  min-width: 720px;
 }
 
 .control-grid {
@@ -1084,6 +1104,7 @@ button.action-btn:hover {
       </div>
 
       <h3>Recent Donation Visits</h3>
+      <div class="table-shell">
       <table>
         <thead>
           <tr>
@@ -1096,10 +1117,12 @@ button.action-btn:hover {
         </thead>
         <tbody id="visitBody"></tbody>
       </table>
+      </div>
     </section>
 
     <section class="page" id="users" data-title="User Management" data-hint="View, block, unblock or remove platform users.">
       <h3>Users</h3>
+      <div class="table-shell">
       <table>
         <thead>
           <tr>
@@ -1113,10 +1136,12 @@ button.action-btn:hover {
         </thead>
         <tbody id="usersTableBody"></tbody>
       </table>
+      </div>
     </section>
 
     <section class="page" id="donors" data-title="Donor Directory" data-hint="Track donor records by blood group and city.">
       <h3>Donors</h3>
+      <div class="table-shell">
       <table>
         <thead>
           <tr>
@@ -1128,6 +1153,7 @@ button.action-btn:hover {
         </thead>
         <tbody id="donorTableBody"></tbody>
       </table>
+      </div>
     </section>
 
     <section class="page" id="hospitals" data-title="Manage Hospital" data-hint="Add hospitals with location and contact details.">
@@ -1144,13 +1170,14 @@ button.action-btn:hover {
           </div>
           <div class="field">
             <label>Contact</label>
-            <input type="text" id="hospitalContactInput" placeholder="9876543210">
+            <input type="text" id="hospitalContactInput" placeholder="9876543210" maxlength="10" inputmode="numeric" pattern="[0-9]{10}">
           </div>
           <button class="settings-btn primary" onclick="saveHospital()">Save</button>
         </div>
       </div>
 
       <h3>Hospital List</h3>
+      <div class="table-shell">
       <table>
         <thead>
           <tr>
@@ -1162,6 +1189,7 @@ button.action-btn:hover {
         </thead>
         <tbody id="hospitalTableBody"></tbody>
       </table>
+      </div>
     </section>
 
     <section class="page" id="bloodBanks" data-title="Manage Blood Bank" data-hint="Link blood banks with hospitals for alternate availability.">
@@ -1181,6 +1209,7 @@ button.action-btn:hover {
       </div>
 
       <h3>Blood Bank List</h3>
+      <div class="table-shell">
       <table>
         <thead>
           <tr>
@@ -1192,6 +1221,7 @@ button.action-btn:hover {
         </thead>
         <tbody id="bloodBankTableBody"></tbody>
       </table>
+      </div>
     </section>
 
     <section class="page" id="bloodStocks" data-title="Manage Blood Stock" data-hint="Update available units by blood bank and blood group.">
@@ -1224,6 +1254,7 @@ button.action-btn:hover {
       </div>
 
       <h3>Blood Stock Table</h3>
+      <div class="table-shell">
       <table>
         <thead>
           <tr>
@@ -1237,10 +1268,12 @@ button.action-btn:hover {
         </thead>
         <tbody id="bloodStockTableBody"></tbody>
       </table>
+      </div>
     </section>
 
     <section class="page" id="requests" data-title="Donation Visits" data-hint="Approve or reject pending donation visit requests.">
       <h3>Donation Visits</h3>
+      <div class="table-shell">
       <table>
         <thead>
           <tr>
@@ -1254,6 +1287,7 @@ button.action-btn:hover {
         </thead>
         <tbody id="allRequestsBody"></tbody>
       </table>
+      </div>
     </section>
 
     <section class="page" id="receivers" data-title="Receiver Requests" data-hint="Monitor blood demand urgency and response performance.">
@@ -1280,6 +1314,7 @@ button.action-btn:hover {
           <div id="responseRatePercent" class="chip-value">0%</div>
         </div>
       </div>
+      <div class="table-shell">
       <table>
         <thead>
           <tr>
@@ -1294,6 +1329,7 @@ button.action-btn:hover {
         </thead>
         <tbody id="receiversTableBody"></tbody>
       </table>
+      </div>
     </section>
 
     <section class="page" id="settings" data-title="Admin Settings" data-hint="Configure points, eligibility rules and user panel controls.">

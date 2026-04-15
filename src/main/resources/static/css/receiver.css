@@ -192,6 +192,13 @@
   transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
+.input-group input[disabled],
+.input-group select[disabled] {
+  cursor: not-allowed;
+  background: #f8f4f1;
+  color: #6b7280;
+}
+
 .input-group input[type="file"] {
   padding-top: 0.8rem;
 }

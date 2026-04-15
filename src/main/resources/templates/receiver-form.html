@@ -49,6 +49,17 @@
       outline: 3px solid rgba(220, 38, 38, 0.16);
       transform: translateY(-1px);
     }
+
+    .urgency-lock-note {
+      margin-top: -0.35rem;
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: #8a2431;
+    }
+
+    .urgency-lock-note.hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -187,9 +198,10 @@
                 </select>
                 <label>Emergency Level</label>
               </div>
+              <div id="urgencyLockNote" class="urgency-lock-note hidden">Emergency mode is locked to Critical priority.</div>
 
               <div class="input-group">
-                <input type="text" id="contactNumber" required>
+                <input type="text" id="contactNumber" required maxlength="10" inputmode="numeric" pattern="[0-9]{10}">
                 <label>Contact Number</label>
               </div>
 
