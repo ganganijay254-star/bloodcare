@@ -165,13 +165,6 @@ public class AuthController {
     public ResponseEntity<?> forgotPassword(
             @RequestParam String email,
             HttpServletRequest request) {
-
-        User user = userRepository.findByEmail(email);
-
-        if (user == null) {
-            return ResponseEntity.badRequest().body(message("Email not registered"));
-        }
-
         String normalizedEmail = normalizeEmail(email);
         if (normalizedEmail == null) {
             return ResponseEntity.badRequest().body(message("Please enter a valid email address"));
