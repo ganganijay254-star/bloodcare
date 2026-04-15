@@ -13,9 +13,10 @@
 }
 
 .receiver-shell {
-  width: min(1180px, calc(100% - 2rem));
+  width: 100%;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 2rem 0 3rem;
+  padding: 2rem 1rem 3rem;
 }
 
 .receiver-layout {
@@ -411,23 +412,34 @@
 
 @media (max-width: 1080px) {
   .receiver-shell {
-    width: calc(100% - 1rem);
     padding-top: 1rem;
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .receiver-shell {
-    width: calc(100% - 1rem);
+    padding-inline: 0.75rem;
+  }
+
+  .receiver-layout {
+    grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 576px) {
   .location-screen {
     padding: 2rem 1.4rem;
   }
 
   .auth-neo {
     padding: 1.1rem;
+  }
+
+  .hospital-card,
+  .receiver-summary p,
+  .eligibility,
+  #trackContainer,
+  #proofContainer p {
+    padding: 0.9rem;
   }
 }

@@ -1,7 +1,8 @@
 .dashboard-wrapper {
-  width: min(1180px, calc(100% - 2rem));
+  width: 100%;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 2rem 0 3rem;
+  padding: 2rem 1rem 3rem;
 }
 
 .dashboard-main {
@@ -11,6 +12,14 @@
 
 .dashboard-nav {
   gap: 0.55rem;
+}
+
+.dashboard-nav .btn,
+.dashboard-hero__actions .btn,
+.dashboard-hero__actions .btn-outline,
+.dashboard-hero__actions .btn-ghost,
+.reward-section-header .btn {
+  width: auto;
 }
 
 .dashboard-hero {
@@ -690,7 +699,7 @@
 
 @media (max-width: 720px) {
   .dashboard-wrapper {
-    width: calc(100% - 1rem);
+    padding-inline: 0.75rem;
     padding-top: 1rem;
   }
 
@@ -717,5 +726,35 @@
 
   .reward-card__actions {
     flex-direction: column;
+  }
+
+  .reward-section-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reward-section-header .btn,
+  .dashboard-hero__actions .btn,
+  .dashboard-hero__actions .btn-outline,
+  .dashboard-hero__actions .btn-ghost {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .dashboard-hero,
+  .stat-box,
+  .info-section,
+  .certificate-section,
+  .request-card,
+  .reward-card {
+    padding: 1.1rem;
+    border-radius: 1.15rem;
+  }
+
+  .activity-table th,
+  .activity-table td {
+    padding: 0.8rem 0.65rem;
+    font-size: 0.88rem;
   }
 }

@@ -158,3 +158,16 @@
     width: 100%;
   }
 }
+
+@media (max-width: 576px) {
+  .photo-section,
+  .profile-item {
+    padding: 0.95rem;
+  }
+
+  .profile-photo,
+  .photo-placeholder {
+    width: 120px;
+    height: 120px;
+  }
+}

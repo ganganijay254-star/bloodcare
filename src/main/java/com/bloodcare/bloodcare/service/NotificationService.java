@@ -3,9 +3,9 @@ package com.bloodcare.bloodcare.service;
 import com.bloodcare.bloodcare.entity.Notification;
 import com.bloodcare.bloodcare.entity.User;
 import com.bloodcare.bloodcare.repository.NotificationRepository;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.List;
 
 @Service
 public class NotificationService {
@@ -17,6 +17,10 @@ public class NotificationService {
      * Create a simple notification
      */
     public Notification createNotification(User user, String title, String message, String type) {
+        if (user == null) {
+            return null;
+        }
+
         Notification notification = new Notification(user, title, message, type);
         return notificationRepository.save(notification);
     }
@@ -24,16 +28,19 @@ public class NotificationService {
     /**
      * Create a blood delivery notification with details
      */
-    public Notification createBloodDeliveryNotification(User user, String bloodGroup, 
+    public Notification createBloodDeliveryNotification(User user, String bloodGroup,
                                                         Integer unitsDelivered, String hospitalName,
                                                         String location, String expectedDeliveryTime) {
-        String title = "🩸 Blood Delivery Confirmed";
-        String message = String.format("Your %s blood (%d units) will arrive at %s within %s", 
-                                      bloodGroup, unitsDelivered, hospitalName, expectedDeliveryTime);
-        
+        if (user == null) {
+            return null;
+        }
+
+        String title = "Blood Delivery Confirmed";
+        String message = String.format("Your %s blood (%d units) will arrive at %s within %s",
+                bloodGroup, unitsDelivered, hospitalName, expectedDeliveryTime);
+
         Notification notification = new Notification(user, title, message, "BLOOD_DELIVERY",
-                                                    bloodGroup, unitsDelivered, hospitalName,
-                                                    location, expectedDeliveryTime);
+                bloodGroup, unitsDelivered, hospitalName, location, expectedDeliveryTime);
         return notificationRepository.save(notification);
     }
 

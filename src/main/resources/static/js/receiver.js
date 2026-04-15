@@ -19,7 +19,6 @@ const urgentNeededBtn = document.getElementById("urgentNeededBtn");
 const emergencyBanner = document.getElementById("emergencyBanner");
 let receiverConfig = { settings: {}, controls: {} };
 let emergencyMode = false;
-
 let selectedHospital = "";
 
 const compatibility = {
@@ -38,6 +37,20 @@ function showToast(text, type = "success") {
   toast.innerText = text;
   toast.className = `toast show ${type}`;
   setTimeout(() => toast.classList.remove("show"), 3000);
+}
+
+async function readResponsePayload(response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    try {
+      return await response.json();
+    } catch (error) {
+      return {};
+    }
+  }
+
+  const text = await response.text();
+  return text ? { message: text } : {};
 }
 
 function showEligibility(status = "eligible", message = "") {
@@ -159,22 +172,19 @@ function renderHospitals(data) {
   showToast("Nearby hospitals loaded");
 }
 
-function fetchNearbyHospitals(lat, lng) {
-  fetch(`/api/hospitals/nearby?lat=${lat}&lng=${lng}`)
-    .then((res) => {
-      if (!res.ok) throw new Error("Failed to fetch hospitals");
-      return res.json();
-    })
-    .then((data) => {
-      renderHospitals(data);
-      if (locationStep) locationStep.classList.add("hidden");
-    })
-    .catch(() => {
-      if (locationStatus) {
-        locationStatus.innerText = "Unable to load nearby hospitals.";
-      }
-      showToast("Hospital service error", "error");
-    });
+async function fetchNearbyHospitals(lat, lng) {
+  try {
+    const res = await fetch(`/api/hospitals/nearby?lat=${lat}&lng=${lng}`);
+    if (!res.ok) throw new Error("Failed to fetch hospitals");
+    const data = await res.json();
+    renderHospitals(data);
+    if (locationStep) locationStep.classList.add("hidden");
+  } catch (error) {
+    if (locationStatus) {
+      locationStatus.innerText = "Unable to load nearby hospitals.";
+    }
+    showToast("Hospital service error", "error");
+  }
 }
 
 function getLocation() {
@@ -205,6 +215,43 @@ function getLocation() {
   );
 }
 
+function validatePayload(payload) {
+  if (!payload.hospital) return "Please select hospital";
+  if (!payload.patientName || payload.patientName.trim().length < 2) return "Please enter patient name";
+  if (!payload.bloodGroup) return "Please select blood group";
+  if (!payload.city || payload.city.trim().length < 2) return "Please enter city";
+  if (!/^[0-9]{10}$/.test(payload.contactNumber)) return "Please enter a valid 10 digit contact number";
+  if (!Number.isFinite(payload.unitsRequired) || payload.unitsRequired <= 0) return "Please enter valid units";
+  return "";
+}
+
+async function submitMedicalProof(requestId) {
+  const fileInput = document.getElementById("medicalProof");
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0 || !requestId) {
+    return { success: true };
+  }
+
+  const fd = new FormData();
+  fd.append("file", fileInput.files[0]);
+
+  try {
+    const uploadRes = await fetch(`/api/blood-request/upload-proof/${requestId}`, {
+      method: "POST",
+      body: fd,
+      credentials: "include"
+    });
+
+    if (!uploadRes.ok) {
+      const uploadPayload = await readResponsePayload(uploadRes);
+      return { success: false, message: uploadPayload.message || "Medical proof upload failed." };
+    }
+  } catch (error) {
+    return { success: false, message: "Medical proof upload failed." };
+  }
+
+  return { success: true };
+}
+
 window.getLocation = getLocation;
 
 showEligibility();
@@ -221,24 +268,12 @@ loadPublicConfig().then(() => {
 });
 
 if (form) {
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const hospital = (document.getElementById("hospital") || {}).value || selectedHospital;
     const units = Number((requestUnitsInput && requestUnitsInput.value) || 0);
-    const emergencyLevel = (document.getElementById("emergencyLevel") || {}).value || 'LOW';
-
-    if (!hospital) {
-      showToast("Please select hospital", "error");
-      return;
-    }
-
-    if (!units || units <= 0) {
-      showToast("Please enter valid units", "error");
-      return;
-    }
-
-    // emergencyLevel is optional but defaults to NORMAL
+    const emergencyLevel = (document.getElementById("emergencyLevel") || {}).value || "LOW";
 
     const controls = receiverConfig.controls || {};
     if (controls.maintenanceMode === true || controls.showBloodRequest === false || controls.enableRequests === false) {
@@ -246,78 +281,85 @@ if (form) {
       return;
     }
 
-    // Prepare form data and submit blood request
     const payload = {
-      patientName: (document.getElementById("patientName") || {}).value || "",
-      hospital: hospital,
+      patientName: ((document.getElementById("patientName") || {}).value || "").trim(),
+      hospital,
       unitsRequired: units,
       bloodGroup: (document.getElementById("bloodGroup") || {}).value || "",
-      city: (document.getElementById("city") || {}).value || "",
-      contactNumber: (document.getElementById("contactNumber") || {}).value || "",
-      urgency: emergencyMode ? "CRITICAL" : ((document.getElementById("emergencyLevel") || {}).value || emergencyLevel || "LOW"),
-      description: "",
-      // medical proof upload not implemented server-side; skip for now
+      city: ((document.getElementById("city") || {}).value || "").trim(),
+      contactNumber: ((document.getElementById("contactNumber") || {}).value || "").trim(),
+      urgency: emergencyMode ? "CRITICAL" : emergencyLevel,
+      description: ""
     };
 
+    const validationMessage = validatePayload(payload);
+    if (validationMessage) {
+      showToast(validationMessage, "error");
+      return;
+    }
+
     const endpoint = payload.urgency === "CRITICAL" ? "/api/blood-request/create-emergency" : "/api/blood-request/create";
+    const submitButton = form.querySelector('button[type="submit"]');
 
-    fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(payload)
-    })
-      .then(async (res) => {
-        if (res.status === 401) {
-          showToast("Please login first", "error");
-          setTimeout(() => {
-            window.location.href = "/login";
-          }, 1200);
-          return null;
-        }
-        if (!res.ok) throw new Error("Submit failed");
-        return res.json();
-      })
-      .then((saved) => {
-        if (!saved) return;
+    try {
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Submitting...";
+      }
 
-        if (requestSummary) {
-          requestSummary.innerHTML = `
-            <p><strong>Hospital:</strong> ${saved.request.hospital}</p>
-            <p><strong>Units:</strong> ${saved.request.unitsRequired}</p>
-            <p><strong>Request ID:</strong> ${saved.request.publicId || ''}</p>
-            <p><strong>Status:</strong> ${saved.request.status}</p>
-            <p><strong>Compatible:</strong> ${(saved.compatibleBloodGroups || []).join(', ') || '-'}</p>
-          `;
-        }
-
-        if (formStep) formStep.classList.add("hidden");
-        if (visitStep) visitStep.classList.remove("hidden");
-        showToast("Request submitted successfully");
-
-        // Redirect to tracking page for receiver
-        // If medical proof file is selected, upload it, then redirect to tracking
-        const fileInput = document.getElementById('medicalProof');
-        const reqId = saved.request.id;
-        if (fileInput && fileInput.files && fileInput.files.length > 0 && reqId) {
-          const fd = new FormData();
-          fd.append('file', fileInput.files[0]);
-          fetch(`/api/blood-request/upload-proof/${reqId}`, { method: 'POST', body: fd, credentials: 'include' })
-            .then(res => res.ok ? res.json() : null)
-            .then(() => {
-              window.location.href = `/receiver-track?requestId=${reqId}`;
-            })
-            .catch(() => {
-              // still redirect even if upload fails
-              window.location.href = `/receiver-track?requestId=${reqId}`;
-            });
-        } else {
-          setTimeout(() => window.location.href = `/receiver-track?requestId=${reqId}` , 1000);
-        }
-      })
-      .catch(() => {
-        showToast("Unable to submit request", "error");
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload)
       });
+
+      const responsePayload = await readResponsePayload(res);
+
+      if (res.status === 401) {
+        showToast(responsePayload.message || "Please login first", "error");
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1200);
+        return;
+      }
+
+      if (!res.ok) {
+        showToast(responsePayload.message || "Unable to submit request", "error");
+        return;
+      }
+
+      if (requestSummary) {
+        requestSummary.innerHTML = `
+          <p><strong>Hospital:</strong> ${responsePayload.request.hospital}</p>
+          <p><strong>Units:</strong> ${responsePayload.request.unitsRequired}</p>
+          <p><strong>Request ID:</strong> ${responsePayload.request.publicId || ""}</p>
+          <p><strong>Status:</strong> ${responsePayload.request.status}</p>
+          <p><strong>Compatible:</strong> ${(responsePayload.compatibleBloodGroups || []).join(", ") || "-"}</p>
+        `;
+      }
+
+      if (formStep) formStep.classList.add("hidden");
+      if (visitStep) visitStep.classList.remove("hidden");
+      showToast(responsePayload.message || "Request submitted successfully");
+
+      const reqId = responsePayload.request.id;
+      const uploadResult = await submitMedicalProof(reqId);
+      if (!uploadResult.success) {
+        showToast(uploadResult.message, "warn");
+      }
+
+      setTimeout(() => {
+        window.location.href = `/receiver-track?requestId=${reqId}`;
+      }, 1000);
+    } catch (error) {
+      showToast("Unable to submit request", "error");
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = "Submit Request";
+      }
+    }
   });
 }
 

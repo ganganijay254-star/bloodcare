@@ -55,6 +55,20 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+async function readResponsePayload(response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    try {
+      return await response.json();
+    } catch (error) {
+      return {};
+    }
+  }
+
+  const text = await response.text();
+  return text ? { message: text } : {};
+}
+
 function passwordScore(val) {
   let score = 0;
   if (!val) return 0;
@@ -206,9 +220,9 @@ if (form) {
           window.location.href = "/login";
         }, 1200);
       } else {
-        const errorText = await response.text();
-        setStatus(errorText || "Signup failed. Please try again.", "error");
-        localShow(errorText || "Signup failed");
+        const payload = await readResponsePayload(response);
+        setStatus(payload.message || "Signup failed. Please try again.", "error");
+        localShow(payload.message || "Signup failed");
       }
     } catch (error) {
       setStatus("Server error. Please try again.", "error");

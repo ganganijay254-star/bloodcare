@@ -1,7 +1,8 @@
 .home-shell {
-  width: min(1180px, calc(100% - 2rem));
+  width: 100%;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 2rem 0 4rem;
+  padding: 2rem 1rem 4rem;
 }
 
 .hero {
@@ -77,6 +78,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.9rem;
+}
+
+.hero-buttons .btn,
+.hero-buttons .btn-outline,
+.cta-banner__actions .btn,
+.cta-banner__actions .btn-outline {
+  width: auto;
 }
 
 .hero-notes {
@@ -574,14 +582,50 @@
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .home-shell {
-    width: min(100% - 1.2rem, 1180px);
+    padding-top: 1.25rem;
+    padding-bottom: 3rem;
+  }
+
+  .hero {
     padding-top: 1rem;
+  }
+
+  .pulse-panel__head,
+  .city-card,
+  .story-ribbon,
+  .cta-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .pulse-panel__head,
+  .city-card {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .stock-strip,
+  .feature-grid,
+  .journey-grid,
+  .pulse-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .faq-layout {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .home-shell {
+    padding-inline: 0.75rem;
+    padding-top: 0.9rem;
   }
 
   .hero-copy {
     padding-right: 0;
+    gap: 1rem;
   }
 
   .hero-copy h1 {
@@ -604,6 +648,13 @@
   .hero-buttons,
   .cta-banner__actions {
     flex-direction: column;
+  }
+
+  .hero-buttons .btn,
+  .hero-buttons .btn-outline,
+  .cta-banner__actions .btn,
+  .cta-banner__actions .btn-outline {
+    width: 100%;
   }
 
   .hero-panel,

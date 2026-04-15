@@ -1,6 +1,7 @@
 package com.bloodcare.bloodcare.controller;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -37,7 +38,7 @@ public class AuthController {
     public ResponseEntity<?> signup(@RequestBody User user) {
 
         if (userRepository.findByEmail(user.getEmail()) != null) {
-            return ResponseEntity.badRequest().body("Email already exists");
+            return ResponseEntity.status(409).body(message("Email already exists"));
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -59,12 +60,12 @@ public class AuthController {
         if (user == null ||
             !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
 
-            return ResponseEntity.status(401).body("Invalid credentials");
+            return ResponseEntity.status(401).body(message("Invalid credentials"));
         }
         
         if (user.isBlocked()) {
             if (user.isBlockedByAdmin()) {
-                return ResponseEntity.status(403).body("Your account has been blocked by admin");
+                return ResponseEntity.status(403).body(message("Your account has been blocked by admin"));
             }
             user.setBlocked(false);
             user.setBlockedByAdmin(false);
@@ -86,19 +87,19 @@ public class AuthController {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            return ResponseEntity.status(401).body("Not logged in");
+            return ResponseEntity.status(401).body(message("Not logged in"));
         }
         
         User latestUser = userRepository.findByEmail(user.getEmail());
         if (latestUser == null) {
             session.removeAttribute("user");
-            return ResponseEntity.status(401).body("Not logged in");
+            return ResponseEntity.status(401).body(message("Not logged in"));
         }
 
         if (latestUser.isBlocked()) {
             if (latestUser.isBlockedByAdmin()) {
                 session.removeAttribute("user");
-                return ResponseEntity.status(401).body("Not logged in");
+                return ResponseEntity.status(401).body(message("Not logged in"));
             }
             latestUser.setBlocked(false);
             latestUser.setBlockedByAdmin(false);
@@ -131,7 +132,7 @@ public class AuthController {
         User user = userRepository.findByEmail(email);
 
         if (user == null) {
-            return ResponseEntity.badRequest().body("Email not registered");
+            return ResponseEntity.badRequest().body(message("Email not registered"));
         }
 
         String token = UUID.randomUUID().toString();
@@ -152,9 +153,15 @@ public class AuthController {
         
         String resetLink = baseUrl + "/reset-password?token=" + token;
 
-        emailService.sendResetLink(user.getEmail(), resetLink);
+        try {
+            emailService.sendResetLink(user.getEmail(), resetLink);
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(503).body(message("Password reset email is not configured right now. Please contact support."));
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body(message("Unable to send reset email right now. Please try again shortly."));
+        }
 
-        return ResponseEntity.ok("Reset link sent to email");
+        return ResponseEntity.ok(message("Reset link sent to email"));
     }
 
     /* =====================
@@ -169,11 +176,11 @@ public class AuthController {
         User user = userRepository.findByResetToken(token);
 
         if (user == null) {
-            return ResponseEntity.badRequest().body("Invalid token");
+            return ResponseEntity.badRequest().body(message("Invalid token"));
         }
 
         if (user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
-            return ResponseEntity.badRequest().body("Token expired");
+            return ResponseEntity.badRequest().body(message("Token expired"));
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -182,6 +189,12 @@ public class AuthController {
 
         userRepository.save(user);
 
-        return ResponseEntity.ok("Password updated successfully");
+        return ResponseEntity.ok(message("Password updated successfully"));
+    }
+
+    private Map<String, String> message(String value) {
+        Map<String, String> response = new LinkedHashMap<>();
+        response.put("message", value);
+        return response;
     }
 }

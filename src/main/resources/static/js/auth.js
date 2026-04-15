@@ -48,6 +48,20 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+async function readResponsePayload(response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    try {
+      return await response.json();
+    } catch (error) {
+      return {};
+    }
+  }
+
+  const text = await response.text();
+  return text ? { message: text } : {};
+}
+
 function setFieldState(groupId, errorId, message) {
   const group = groupId ? document.getElementById(groupId) : null;
   const error = document.getElementById(errorId);
@@ -159,12 +173,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (res.status === 403) {
-          setStatusMessage("loginStatus", "Your account has been blocked by admin.", "error");
+          const payload = await readResponsePayload(res);
+          setStatusMessage("loginStatus", payload.message || "Your account has been blocked by admin.", "error");
           return;
         }
 
         if (!res.ok) {
-          setStatusMessage("loginStatus", "Invalid email or password.", "error");
+          const payload = await readResponsePayload(res);
+          setStatusMessage("loginStatus", payload.message || "Invalid email or password.", "error");
           return;
         }
 
@@ -214,12 +230,14 @@ async function sendReset() {
       method: "POST"
     });
 
+    const payload = await readResponsePayload(res);
+
     if (!res.ok) {
-      localShow("Email not registered", "error");
+      localShow(payload.message || "Email not registered", "error");
       return;
     }
 
-    localShow("Reset link sent to your email", "success");
+    localShow(payload.message || "Reset link sent to your email", "success");
     closeForgot();
   } catch (err) {
     localShow("Server error", "error");

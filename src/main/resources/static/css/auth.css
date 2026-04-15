@@ -6,9 +6,10 @@
 }
 
 .auth-stage {
-  width: min(1180px, calc(100% - 2rem));
+  width: 100%;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 2rem 0 3rem;
+  padding: 2rem 1rem 3rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(24rem, 30rem);
   gap: 1.3rem;
@@ -624,7 +625,7 @@
 
 @media (max-width: 640px) {
   .auth-stage {
-    width: calc(100% - 1rem);
+    padding-inline: 0.75rem;
     padding-top: 1rem;
   }
 
@@ -651,6 +652,15 @@
   .field-meta {
     flex-direction: column;
     gap: 0.25rem;
+  }
+
+  .forgot {
+    text-align: left;
+  }
+
+  .forgot-card .btn-group,
+  .btn-group {
+    gap: 0.65rem;
   }
 }
 

@@ -123,6 +123,7 @@
 </div>
 
 <script th:src="@{/js/leaderboard.js}"></script>
+<script th:src="@{/js/main.js}"></script>
 <script>
 // Hide leaderboard if admin disables it
 fetch('/api/admin/public-config').then(r=>r.json()).then(cfg=>{
