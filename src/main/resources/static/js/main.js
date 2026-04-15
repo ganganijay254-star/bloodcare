@@ -69,6 +69,7 @@ function enhanceNavbar(navbar, index) {
   brand.appendChild(toggle);
   navbar.insertBefore(brand, menuWrap);
   navbar.classList.add("has-collapsible-nav");
+  navbar.classList.toggle("has-mobile-nav", nav.children.length > 1);
 
   toggle.addEventListener("click", () => {
     const isOpen = navbar.classList.contains("is-open");

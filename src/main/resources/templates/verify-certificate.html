@@ -6,453 +6,292 @@
     <title>Certificate Verification | BloodCare</title>
     <link rel="stylesheet" th:href="@{/css/common.css}">
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-        }
+        * { box-sizing: border-box; }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: 'Segoe UI', 'Tahoma', sans-serif;
-            display: flex;
-            flex-direction: column;
+            margin: 0;
             min-height: 100vh;
-            overflow-x: hidden;
+            background:
+                radial-gradient(circle at top left, rgba(202, 90, 70, 0.22), transparent 22rem),
+                radial-gradient(circle at bottom right, rgba(138, 36, 49, 0.18), transparent 20rem),
+                linear-gradient(180deg, #fffaf7 0%, #f7ece5 100%);
+            font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+            color: #1d2535;
         }
 
-        .status-bar {
-            background: #dc2626;
-            color: white;
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        .verify-shell {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 1.5rem;
         }
 
-        .status-bar::before {
-            content: '✓';
-            font-size: 20px;
-            font-weight: bold;
-        }
-
-        .certificate-viewer {
-            flex: 1;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .certificate-card {
-            background: linear-gradient(to bottom, #ffffff 0%, #f8f9ff 100%);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.9);
-            padding: 30px 20px;
-            margin: 0 auto;
-            width: 100%;
-            max-width: 600px;
-            position: relative;
+        .verify-card {
+            width: min(100%, 760px);
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(93, 24, 33, 0.12);
+            border-radius: 1.75rem;
+            box-shadow: 0 28px 70px rgba(29, 37, 53, 0.16);
             overflow: hidden;
+            backdrop-filter: blur(14px);
         }
 
-        .certificate-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
+        .verify-banner {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1rem 1.25rem;
+            background: linear-gradient(135deg, #2b7d58, #235f45);
+            color: #fff;
+            font-weight: 700;
         }
 
-        .cert-header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-top: 15px;
+        .verify-banner--error {
+            background: linear-gradient(135deg, #c04a3d, #8a2431);
         }
 
-        .cert-header h1 {
-            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-size: 36px;
-            margin: 0 0 8px 0;
+        .verify-banner__icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.16);
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .verify-body {
+            padding: 1.5rem;
+        }
+
+        .verify-eyebrow {
+            color: #8a2431;
+            font-size: 0.8rem;
             font-weight: 800;
-        }
-
-        .cert-header p {
-            color: #764ba2;
-            font-size: 14px;
-            margin: 0;
-            font-weight: 600;
-        }
-
-        .cert-title {
-            text-align: center;
-            font-size: 26px;
-            color: #dc2626;
-            margin: 25px 0 20px 0;
-            font-weight: 700;
-            font-style: italic;
-        }
-
-        .cert-text {
-            text-align: center;
-            color: #555;
-            font-size: 15px;
-            margin: 12px 0;
-            line-height: 1.4;
-        }
-
-        .cert-name {
-            text-align: center;
-            font-size: 24px;
-            color: #dc2626;
-            font-weight: 700;
-            margin: 15px 0;
-            padding: 15px;
-            border-bottom: 2px solid #ef4444;
-            border-top: 2px solid #ef4444;
-        }
-
-        .cert-details {
-            background: linear-gradient(135deg, #f0f4ff 0%, #f1f5f9 100%);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 25px 0;
-            border-left: 5px solid #dc2626;
-        }
-
-        .detail-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .detail-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .detail-item {
-            background: white;
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .detail-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: #dc2626;
+            letter-spacing: 0.16em;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
         }
 
-        .detail-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1f2937;
+        .verify-title {
+            margin: 0.55rem 0 0.9rem;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            line-height: 0.98;
+            color: #5d1821;
         }
 
-        .appreciation-box {
-            background: linear-gradient(135deg, #fef3c7 0%, #fecaca 100%);
-            border: 2px dashed #dc2626;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            margin: 25px 0;
+        .verify-copy {
+            color: #566278;
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 1.4rem;
         }
 
-        .appreciation-box p {
-            margin: 0;
-            color: #7c2d12;
-            font-size: 15px;
-            font-weight: 600;
-            line-height: 1.6;
-        }
-
-        .verification-badge {
-            background: #22c55e;
-            color: white;
-            text-align: center;
-            padding: 12px;
-            border-radius: 8px;
-            margin: 20px 0;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .verification-badge::before {
-            content: '✓';
-            font-size: 18px;
-        }
-
-        .action-buttons {
+        .verify-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 25px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
         }
 
-        .btn {
-            padding: 14px 16px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
+        .verify-item {
+            padding: 1rem;
+            border-radius: 1.1rem;
+            background: #fff;
+            border: 1px solid rgba(93, 24, 33, 0.1);
+        }
+
+        .verify-label {
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #8a2431;
+            margin-bottom: 0.45rem;
+        }
+
+        .verify-value {
+            font-size: 1.05rem;
             font-weight: 700;
-            text-decoration: none;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            color: #1d2535;
+            word-break: break-word;
+        }
+
+        .verify-note {
+            margin-top: 1.3rem;
+            padding: 1rem 1.1rem;
+            border-radius: 1rem;
+            background: rgba(43, 125, 88, 0.08);
+            border: 1px solid rgba(43, 125, 88, 0.14);
+            color: #235f45;
+            font-weight: 600;
+        }
+
+        .verify-actions {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+            gap: 0.8rem;
+            margin-top: 1.5rem;
         }
 
-        .btn-download {
-            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-            color: white;
+        .verify-actions .btn,
+        .verify-actions .btn-outline {
+            flex: 1 1 0;
         }
 
-        .btn-download:active {
-            transform: scale(0.95);
-        }
-
-        .btn-home {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-home:active {
-            transform: scale(0.95);
-        }
-
-        .loading {
+        .verify-loading,
+        .verify-error {
             text-align: center;
-            padding: 40px 20px;
-            color: white;
+            padding: 2rem 1rem;
         }
 
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+        .verify-spinner {
+            width: 3rem;
+            height: 3rem;
+            margin: 0 auto 1rem;
+            border-radius: 999px;
+            border: 4px solid rgba(138, 36, 49, 0.15);
+            border-top-color: #8a2431;
+            animation: spin 0.85s linear infinite;
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(360deg); }
         }
 
-        .error-message {
-            text-align: center;
-            padding: 40px 20px;
-            color: white;
-        }
-
-        .error-box {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid #ff6b6b;
-            border-radius: 12px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-        }
-
-        .error-box h2 {
-            color: #ff6b6b;
-            margin: 0 0 10px 0;
-            font-size: 20px;
-        }
-
-        .error-box p {
-            color: white;
-            margin: 0;
-            font-size: 14px;
-        }
-
-        @media (max-width: 600px) {
-            .certificate-card {
-                border-radius: 15px;
-                padding: 20px 15px;
+        @media (max-width: 640px) {
+            .verify-shell {
+                padding: 1rem;
             }
 
-            .cert-header h1 {
-                font-size: 32px;
+            .verify-body {
+                padding: 1.2rem;
             }
 
-            .cert-title {
-                font-size: 22px;
-            }
-
-            .cert-name {
-                font-size: 20px;
-            }
-
-            .detail-row {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .action-buttons {
+            .verify-grid {
                 grid-template-columns: 1fr;
             }
 
-            body {
-                padding-bottom: 20px;
-            }
-        }
-
-        @media print {
-            body, html {
-                height: auto;
-            }
-
-            .status-bar, .action-buttons {
-                display: none;
-            }
-
-            .certificate-card {
-                box-shadow: none;
-                border: 1px solid #ddd;
-                margin: 0;
+            .verify-actions {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
-
-<div class="status-bar">Certificate Verified</div>
-
-<div class="certificate-viewer">
-    <div class="certificate-card">
-        <!-- HEADER -->
-        <div class="cert-header">
-            <h1>🩸 BloodCare</h1>
-            <p>Blood Donation Certificate</p>
+<div class="verify-shell">
+    <main class="verify-card">
+        <div id="verifyBanner" class="verify-banner">
+            <span class="verify-banner__icon">OK</span>
+            <span id="verifyBannerText">Valid certificate located</span>
         </div>
 
-        <!-- TITLE -->
-        <div class="cert-title">Certificate of Appreciation</div>
-
-        <!-- CONTENT -->
-        <div class="cert-text">This is to certify that</div>
-        <div class="cert-name" id="donorName">Loading...</div>
-        <div class="cert-text">has graciously donated blood to</div>
-        <div class="cert-text" style="font-size: 18px; font-weight: 600; color: #333;" id="hospitalName">Hospital</div>
-
-        <!-- DETAILS -->
-        <div class="cert-details">
-            <div class="detail-row">
-                <div class="detail-item">
-                    <div class="detail-label">Blood Group</div>
-                    <div class="detail-value" id="bloodGroup">—</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Units Donated</div>
-                    <div class="detail-value" id="units">—</div>
-                </div>
-            </div>
-            <div class="detail-row">
-                <div class="detail-item">
-                    <div class="detail-label">Donation Date</div>
-                    <div class="detail-value" id="donationDate">—</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Certificate No.</div>
-                    <div class="detail-value" id="certNumber">—</div>
-                </div>
+        <div id="verifyRoot" class="verify-body">
+            <div class="verify-loading">
+                <div class="verify-spinner"></div>
+                <h2>Checking certificate</h2>
+                <p>Please wait while we verify this BloodCare donation certificate.</p>
             </div>
         </div>
-
-        <!-- APPRECIATION -->
-        <div class="appreciation-box">
-            <p>💝 <strong>Thank You for Being a Life Saver!</strong><br>
-            Your generous donation has made a difference in someone's life.</p>
-        </div>
-
-        <!-- VERIFICATION BADGE -->
-        <div class="verification-badge">
-            Authentic Certificate
-        </div>
-
-        <!-- ACTION BUTTONS -->
-        <div class="action-buttons">
-            <button class="btn btn-download" onclick="downloadCertificate()">📥 Download</button>
-            <button class="btn btn-home" onclick="goHome()">🏠 Home</button>
-        </div>
-    </div>
+    </main>
 </div>
 
 <script>
-    // Get certificate number from URL
     const params = new URLSearchParams(window.location.search);
-    const certNumber = params.get('cert');
+    const certNumber = params.get("cert");
 
-    if (!certNumber) {
-        showError('Certificate not found. Please scan a valid QR code.');
-    } else {
-        // Fetch certificate data using certificate number
-        fetch(`/api/certificate/by-number/${certNumber}`, { credentials: 'include' })
-            .then(res => {
-                if (!res.ok) throw new Error('Certificate not found');
-                return res.json();
-            })
-            .then(cert => {
-                // Populate certificate details
-                document.getElementById('donorName').innerText = cert.donor?.user?.name || 'Donor';
-                document.getElementById('hospitalName').innerText = cert.hospitalName || 'Hospital';
-                document.getElementById('donationDate').innerText = cert.donationDate || '—';
-                document.getElementById('units').innerText = (cert.units || '—') + ' units';
-                document.getElementById('bloodGroup').innerText = cert.donor?.bloodGroup || '—';
-                document.getElementById('certNumber').innerText = cert.certificateNumber || '—';
-            })
-            .catch(err => {
-                console.log('Error:', err);
-                showError('Unable to load certificate. Please try again or contact support.');
-            });
+    function formatDate(value) {
+        if (!value) return "Not available";
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString();
     }
 
-    function showError(message) {
-        document.querySelector('.certificate-viewer').innerHTML = `
-            <div class="error-message">
-                <div class="error-box">
-                    <h2>❌ Verification Failed</h2>
-                    <p>${message}</p>
+    function setBanner(valid, message) {
+        const banner = document.getElementById("verifyBanner");
+        const text = document.getElementById("verifyBannerText");
+        banner.classList.toggle("verify-banner--error", !valid);
+        banner.querySelector(".verify-banner__icon").textContent = valid ? "OK" : "!";
+        text.textContent = message;
+    }
+
+    function renderError(message) {
+        setBanner(false, "Verification failed");
+        document.getElementById("verifyRoot").innerHTML = `
+            <div class="verify-error">
+                <div class="verify-eyebrow">Certificate Check</div>
+                <h1 class="verify-title">Unable to verify</h1>
+                <p class="verify-copy">${message}</p>
+                <div class="verify-actions">
+                    <a class="btn" href="/">Go to Home</a>
+                    <button class="btn-outline" type="button" onclick="window.location.reload()">Try Again</button>
                 </div>
-                <button class="btn btn-home" onclick="goHome()" style="margin-top: 30px;">Back to Home</button>
             </div>
         `;
     }
 
-    function downloadCertificate() {
-        // Mobile-friendly download via print
-        window.print();
+    function renderCertificate(cert) {
+        setBanner(true, "Certificate verified successfully");
+        document.getElementById("verifyRoot").innerHTML = `
+            <div class="verify-eyebrow">Verified Donation Record</div>
+            <h1 class="verify-title">${cert.donorName || "Verified donor"}</h1>
+            <p class="verify-copy">
+                This certificate is a valid BloodCare donation record and has passed the public verification check.
+            </p>
+
+            <section class="verify-grid">
+                <article class="verify-item">
+                    <div class="verify-label">Certificate Number</div>
+                    <div class="verify-value">${cert.certificateNumber || "Not available"}</div>
+                </article>
+                <article class="verify-item">
+                    <div class="verify-label">Hospital</div>
+                    <div class="verify-value">${cert.hospitalName || "Not available"}</div>
+                </article>
+                <article class="verify-item">
+                    <div class="verify-label">Donation Date</div>
+                    <div class="verify-value">${formatDate(cert.donationDate)}</div>
+                </article>
+                <article class="verify-item">
+                    <div class="verify-label">Units Donated</div>
+                    <div class="verify-value">${cert.units || 0} unit(s)</div>
+                </article>
+                <article class="verify-item">
+                    <div class="verify-label">Blood Group</div>
+                    <div class="verify-value">${cert.bloodGroup || "Not available"}</div>
+                </article>
+                <article class="verify-item">
+                    <div class="verify-label">Issued On</div>
+                    <div class="verify-value">${formatDate(cert.createdDate)}</div>
+                </article>
+            </section>
+
+            <div class="verify-note">
+                Verified through BloodCare public certificate validation. If any printed details do not match this page, treat the document as invalid.
+            </div>
+
+            <div class="verify-actions">
+                <a class="btn" href="/">Back to Home</a>
+                <button class="btn-outline" type="button" onclick="window.print()">Print</button>
+            </div>
+        `;
     }
 
-    function goHome() {
-        window.location.href = '/';
+    if (!certNumber) {
+        renderError("No certificate code was provided. Please scan a valid QR code or open a valid verification link.");
+    } else {
+        fetch(`/api/certificate/verify/${encodeURIComponent(certNumber)}`)
+            .then(async (response) => {
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || payload.success === false) {
+                    throw new Error(payload.message || "The certificate could not be verified.");
+                }
+                return payload;
+            })
+            .then(renderCertificate)
+            .catch((error) => {
+                renderError(error.message || "The certificate could not be verified.");
+            });
     }
 </script>
-
 </body>
 </html>

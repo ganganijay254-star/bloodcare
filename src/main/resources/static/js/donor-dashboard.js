@@ -59,6 +59,20 @@ function notify(message, type = "info") {
   alert(message);
 }
 
+async function parseApiResponse(response, fallbackMessage) {
+  const contentType = response.headers.get("content-type") || "";
+  const isJson = contentType.includes("application/json");
+  const payload = isJson
+    ? await response.json()
+    : { success: response.ok, message: await response.text() };
+
+  if (!response.ok || payload.success === false) {
+    throw new Error(payload.message || fallbackMessage);
+  }
+
+  return payload;
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -598,7 +612,7 @@ function logout() {
 
 function loadRewards() {
   fetch(`${BASE_URL}/rewards/my-rewards`, { credentials: "include" })
-    .then((res) => (res.ok ? res.json() : null))
+    .then((res) => parseApiResponse(res, "Unable to load rewards."))
     .then((data) => {
       if (!data) return;
 
@@ -650,7 +664,14 @@ function loadRewards() {
         }
       }
     })
-    .catch((err) => console.log("Error loading rewards:", err));
+    .catch((err) => {
+      console.log("Error loading rewards:", err);
+      const activeGrid = document.getElementById("activeRewardsGrid");
+      if (activeGrid) {
+        activeGrid.innerHTML = '<div class="empty-state">Rewards are temporarily unavailable. Please try again shortly.</div>';
+      }
+      notify(err.message || "Unable to load rewards.", "error");
+    });
 }
 
 function flashRewardArea() {
@@ -674,18 +695,14 @@ function generateNewReward() {
     method: "POST",
     credentials: "include"
   })
-    .then((res) => res.json())
+    .then((res) => parseApiResponse(res, "Unable to generate reward."))
     .then((data) => {
-      if (data.success) {
-        notify(data.message, "success");
-        flashRewardArea();
-        loadRewards();
-      } else {
-        notify(data.reward || "Error generating reward", "error");
-      }
+      notify(data.message, "success");
+      flashRewardArea();
+      loadRewards();
     })
     .catch((err) => {
-      notify(`Error: ${err.message}`, "error");
+      notify(err.message || "Unable to generate reward.", "error");
     })
     .finally(() => {
       if (btn) {
@@ -701,17 +718,13 @@ function redeemReward(rewardId) {
       method: "POST",
       credentials: "include"
     })
-      .then((res) => res.json())
+      .then((res) => parseApiResponse(res, "Unable to redeem reward."))
       .then((data) => {
-        if (data.success) {
-          notify(data.message, "success");
-          loadRewards();
-        } else {
-          notify(`Error: ${data.message}`, "error");
-        }
+        notify(data.message, "success");
+        loadRewards();
       })
       .catch((err) => {
-        notify(`Error: ${err.message}`, "error");
+        notify(err.message || "Unable to redeem reward.", "error");
       });
   };
 

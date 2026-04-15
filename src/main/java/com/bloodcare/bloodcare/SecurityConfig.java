@@ -90,6 +90,7 @@ public class SecurityConfig {
                     "/api/admin/logout",
                     "/api/admin/public-overview",
                     "/api/certificate/verify/**",
+                    "/api/certificate/by-number/**",
                     "/api/certificate/public-base-url",
                     "/api/admin/public-config",
                     "/api/hospitals/nearby",
