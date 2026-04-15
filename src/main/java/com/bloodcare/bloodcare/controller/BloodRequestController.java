@@ -2,6 +2,7 @@ package com.bloodcare.bloodcare.controller;
 
 import jakarta.servlet.http.HttpSession;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -84,6 +85,16 @@ public class BloodRequestController {
             if (request.getCity() != null) request.setCity(request.getCity().trim());
             if (request.getBloodGroup() != null) request.setBloodGroup(request.getBloodGroup().trim().toUpperCase());
             if (request.getUrgency() != null) request.setUrgency(request.getUrgency().trim().toUpperCase());
+            if (request.getContactNumber() != null) request.setContactNumber(request.getContactNumber().replaceAll("\\D", ""));
+            if (request.getContactNumber() == null || !request.getContactNumber().matches("\\d{10}")) {
+                return ResponseEntity.badRequest().body("Please enter a valid 10 digit contact number");
+            }
+            if (request.getPatientName() == null || request.getPatientName().trim().length() < 2) {
+                return ResponseEntity.badRequest().body("Please enter a valid patient name");
+            }
+            if (request.getUnitsRequired() <= 0) {
+                return ResponseEntity.badRequest().body("Please enter valid required units");
+            }
             request.setUser(user);
             request.setStatus("PENDING_APPROVAL");
             request.setVerified(false);
@@ -647,7 +658,7 @@ public class BloodRequestController {
                         request
                     );
                 } catch (Exception mailError) {
-                    System.out.println("Receiver approval email failed: " + mailError.getMessage());
+                    System.out.println("Receiver approval email failed: " + emailService.describeEmailFailure(mailError));
                 }
             }
             

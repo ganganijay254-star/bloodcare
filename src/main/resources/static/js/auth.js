@@ -145,7 +145,8 @@ document.addEventListener("DOMContentLoaded", () => {
     loginPassword.addEventListener("keyup", (event) => {
       const capsHint = document.getElementById("loginCapsHint");
       if (capsHint) {
-        capsHint.textContent = event.getModifierState("CapsLock") ? "Caps Lock is on" : "";
+        const canReadModifierState = event && typeof event.getModifierState === "function";
+        capsHint.textContent = canReadModifierState && event.getModifierState("CapsLock") ? "Caps Lock is on" : "";
       }
     });
   }

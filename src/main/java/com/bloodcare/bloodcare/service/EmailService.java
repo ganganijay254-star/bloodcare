@@ -5,6 +5,7 @@ import com.bloodcare.bloodcare.entity.BloodStock;
 import com.bloodcare.bloodcare.entity.Donor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,9 @@ public class EmailService {
 
     @Value("${spring.mail.username:}")
     private String mailUsername;
+
+    @Value("${spring.mail.password:}")
+    private String mailPassword;
 
     public void sendResetLink(String toEmail, String link) {
         ensureEmailConfigured();
@@ -271,7 +275,7 @@ public class EmailService {
     }
 
     public boolean isEmailConfigured() {
-        return mailUsername != null && !mailUsername.isBlank();
+        return isPresent(mailUsername) && isPresent(mailPassword);
     }
 
     private void ensureEmailConfigured() {
@@ -286,8 +290,24 @@ public class EmailService {
         }
     }
 
+    public String describeEmailFailure(Exception exception) {
+        if (exception instanceof IllegalStateException) {
+            return exception.getMessage();
+        }
+        if (exception instanceof MailException) {
+            return "Email login failed. Verify MAIL_USERNAME, MAIL_PASSWORD, and Gmail app password settings.";
+        }
+        return exception.getMessage() == null || exception.getMessage().isBlank()
+                ? "Unknown email delivery error"
+                : exception.getMessage();
+    }
+
     private String safe(String value, String fallback) {
         if (value == null || value.isBlank()) return fallback;
         return value;
+    }
+
+    private boolean isPresent(String value) {
+        return value != null && !value.isBlank();
     }
 }

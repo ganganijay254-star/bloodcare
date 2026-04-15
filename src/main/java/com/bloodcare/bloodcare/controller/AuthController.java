@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,6 +32,9 @@ public class AuthController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Value("${app.base-url:http://localhost:8082}")
+    private String appBaseUrl;
 
     /* =====================
        SIGNUP (USER ONLY)
@@ -168,22 +172,26 @@ public class AuthController {
             return ResponseEntity.badRequest().body(message("Email not registered"));
         }
 
+        String normalizedEmail = normalizeEmail(email);
+        if (normalizedEmail == null) {
+            return ResponseEntity.badRequest().body(message("Please enter a valid email address"));
+        }
+
+        User user = userRepository.findByEmail(normalizedEmail);
+
+        if (user == null) {
+            return ResponseEntity.badRequest().body(message("Email not registered"));
+        }
+
         String token = UUID.randomUUID().toString();
         user.setResetToken(token);
         user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(15));
 
         userRepository.save(user);
-
-        // Build reset link from request
-        String scheme = request.getScheme();
-        String serverName = request.getServerName();
-        int serverPort = request.getServerPort();
-        String baseUrl = scheme + "://" + serverName;
-        if ((scheme.equals("http") && serverPort != 80) || 
-            (scheme.equals("https") && serverPort != 443)) {
-            baseUrl += ":" + serverPort;
-        }
-        
+        String requestBaseUrl = buildBaseUrl(request);
+        String baseUrl = requestBaseUrl == null || requestBaseUrl.isBlank()
+                ? normalizeBaseUrl(appBaseUrl)
+                : requestBaseUrl;
         String resetLink = baseUrl + "/reset-password?token=" + token;
 
         try {
@@ -191,7 +199,7 @@ public class AuthController {
         } catch (IllegalStateException ex) {
             return ResponseEntity.status(503).body(message("Password reset email is not configured right now. Please contact support."));
         } catch (Exception ex) {
-            return ResponseEntity.status(500).body(message("Unable to send reset email right now. Please try again shortly."));
+            return ResponseEntity.status(500).body(message(emailService.describeEmailFailure(ex)));
         }
 
         return ResponseEntity.ok(message("Reset link sent to email"));
@@ -247,5 +255,31 @@ public class AuthController {
 
         String digitsOnly = value.replaceAll("\\D", "");
         return digitsOnly.matches("\\d{10}") ? digitsOnly : null;
+    }
+
+    private String buildBaseUrl(HttpServletRequest request) {
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        String forwardedHost = request.getHeader("X-Forwarded-Host");
+        if (forwardedHost != null && !forwardedHost.isBlank()) {
+            String scheme = (forwardedProto == null || forwardedProto.isBlank()) ? request.getScheme() : forwardedProto;
+            return normalizeBaseUrl(scheme + "://" + forwardedHost);
+        }
+
+        String scheme = request.getScheme();
+        String serverName = request.getServerName();
+        int serverPort = request.getServerPort();
+        String baseUrl = scheme + "://" + serverName;
+        if ((scheme.equals("http") && serverPort != 80)
+                || (scheme.equals("https") && serverPort != 443)) {
+            baseUrl += ":" + serverPort;
+        }
+        return normalizeBaseUrl(baseUrl);
+    }
+
+    private String normalizeBaseUrl(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
     }
 }

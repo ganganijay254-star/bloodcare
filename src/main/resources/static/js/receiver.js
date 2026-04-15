@@ -19,6 +19,7 @@ const urgentNeededBtn = document.getElementById("urgentNeededBtn");
 const emergencyBanner = document.getElementById("emergencyBanner");
 const urgencyLockNote = document.getElementById("urgencyLockNote");
 const contactNumberInput = document.getElementById("contactNumber");
+const requiredDateInput = document.getElementById("requiredDate");
 let receiverConfig = { settings: {}, controls: {} };
 let emergencyMode = false;
 let emergencyLocked = false;
@@ -234,7 +235,16 @@ function validatePayload(payload) {
   if (!payload.city || payload.city.trim().length < 2) return "Please enter city";
   if (!/^[0-9]{10}$/.test(payload.contactNumber)) return "Please enter a valid 10 digit contact number";
   if (!Number.isFinite(payload.unitsRequired) || payload.unitsRequired <= 0) return "Please enter valid units";
+  if (payload.requiredDate && payload.requiredDate < todayDateValue()) return "Past date cannot be selected";
   return "";
+}
+
+function todayDateValue() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 async function submitMedicalProof(requestId) {
@@ -272,6 +282,16 @@ if (contactNumberInput) {
   });
 }
 
+if (requiredDateInput) {
+  requiredDateInput.min = todayDateValue();
+  requiredDateInput.addEventListener("change", () => {
+    if (requiredDateInput.value && requiredDateInput.value < todayDateValue()) {
+      requiredDateInput.value = todayDateValue();
+      showToast("Past date cannot be selected", "error");
+    }
+  });
+}
+
 showEligibility();
 ensureHospitalInput();
 loadPublicConfig().then(() => {
@@ -306,6 +326,7 @@ if (form) {
       bloodGroup: (document.getElementById("bloodGroup") || {}).value || "",
       city: ((document.getElementById("city") || {}).value || "").trim(),
       contactNumber: ((document.getElementById("contactNumber") || {}).value || "").trim(),
+      requiredDate: ((document.getElementById("requiredDate") || {}).value || "").trim(),
       urgency: emergencyMode ? "CRITICAL" : emergencyLevel,
       description: ""
     };
