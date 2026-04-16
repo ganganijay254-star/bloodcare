@@ -196,6 +196,8 @@ public class EmailService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
         applyFrom(message);
+        System.out.println("FROM: " + normalizedUsername());
+        System.out.println("TO: " + email);
         message.setSubject("BloodCare - Blood Request Approved (" + safe(request.getPublicId(), "Request") + ")");
 
         String status = safe(request.getStatus(), "OPEN").toUpperCase();
@@ -285,9 +287,13 @@ public class EmailService {
     }
 
     private void applyFrom(SimpleMailMessage message) {
-        if (isEmailConfigured()) {
-            message.setFrom(normalizedUsername());
+        String from = normalizedUsername();
+
+        if (from == null || from.isBlank()) {
+            from = "bloodcares.app@gmail.com";
         }
+
+        message.setFrom(from);
     }
 
     public String describeEmailFailure(Exception exception) {
