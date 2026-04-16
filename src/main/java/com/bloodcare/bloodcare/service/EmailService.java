@@ -275,18 +275,18 @@ public class EmailService {
     }
 
     public boolean isEmailConfigured() {
-        return isPresent(mailUsername) && isPresent(mailPassword);
+        return isPresent(normalizedUsername()) && isPresent(normalizedPassword());
     }
 
     private void ensureEmailConfigured() {
         if (!isEmailConfigured()) {
-            throw new IllegalStateException("Email is not configured. Set MAIL_USERNAME and MAIL_PASSWORD before sending mail.");
+            throw new IllegalStateException("Email is not configured. Set SPRING_MAIL_USERNAME and SPRING_MAIL_PASSWORD before sending mail.");
         }
     }
 
     private void applyFrom(SimpleMailMessage message) {
         if (isEmailConfigured()) {
-            message.setFrom(mailUsername);
+            message.setFrom(normalizedUsername());
         }
     }
 
@@ -295,7 +295,7 @@ public class EmailService {
             return exception.getMessage();
         }
         if (exception instanceof MailException) {
-            return "Email login failed. Verify MAIL_USERNAME, MAIL_PASSWORD, and Gmail app password settings.";
+            return "Email login failed. Verify SPRING_MAIL_USERNAME, SPRING_MAIL_PASSWORD, and Gmail app password settings.";
         }
         return exception.getMessage() == null || exception.getMessage().isBlank()
                 ? "Unknown email delivery error"
@@ -309,5 +309,13 @@ public class EmailService {
 
     private boolean isPresent(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private String normalizedUsername() {
+        return mailUsername == null ? "" : mailUsername.trim();
+    }
+
+    private String normalizedPassword() {
+        return mailPassword == null ? "" : mailPassword.replaceAll("\\s+", "");
     }
 }
