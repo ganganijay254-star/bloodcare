@@ -630,6 +630,9 @@ public class BloodRequestController {
                         request.getCity(),
                         request.getPublicId()).size();
             }
+
+            boolean mailSent = false;
+            String mailMessage = "No receiver email address found.";
             
             // Send delivery notification only when stock was actually reserved.
             if (request.getUser() != null) {
@@ -657,8 +660,11 @@ public class BloodRequestController {
                         request.getUser().getName(),
                         request
                     );
+                    mailSent = true;
+                    mailMessage = "Email sent successfully to " + request.getUser().getEmail();
                 } catch (Exception mailError) {
-                    System.out.println("Receiver approval email failed: " + emailService.describeEmailFailure(mailError));
+                    mailMessage = emailService.describeEmailFailure(mailError);
+                    System.out.println("Receiver approval email failed: " + mailMessage);
                 }
             }
             
@@ -668,6 +674,8 @@ public class BloodRequestController {
             response.put("reservation", reservation);
             response.put("matchedDonors", matchedDonors.size());
             response.put("emergencyBroadcastCount", emergencyBroadcastCount);
+            response.put("mailSent", mailSent);
+            response.put("mailMessage", mailMessage);
             response.put("message", approvalMessage);
             
             return ResponseEntity.ok(response);

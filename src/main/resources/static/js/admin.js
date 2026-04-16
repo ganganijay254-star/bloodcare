@@ -1007,6 +1007,11 @@ function approveReceiverRequest(id, hospitalName) {
       loadReceiverRequests();
       loadBloodStockOverview();
       loadAdminInsights();
+      if (payload.mailSent) {
+        console.log(payload.mailMessage || "Email sent successfully");
+      } else {
+        console.log(payload.mailMessage || "Email was not sent");
+      }
       showToast(payload.message || "Receiver request approved", "success");
     })
     .catch(err => {
