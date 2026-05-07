@@ -626,7 +626,7 @@ function loadRewards() {
             .map(
               (reward) => `
                 <article class="reward-card">
-                  <div class="reward-card__icon">${escapeHtml(reward.icon || "*")}</div>
+                  <div class="reward-card__icon">${renderRewardIcon(reward)}</div>
                   <div>
                     <h4>${escapeHtml(reward.title || "Reward")}</h4>
                     <p>${escapeHtml(reward.description || "Reward unlocked through donation activity.")}</p>
@@ -651,7 +651,7 @@ function loadRewards() {
             .map(
               (reward) => `
                 <article class="reward-card reward-card--redeemed">
-                  <div class="reward-card__icon">${escapeHtml(reward.icon || "*")}</div>
+                  <div class="reward-card__icon">${renderRewardIcon(reward)}</div>
                   <div>
                     <h4>${escapeHtml(reward.title || "Reward")}</h4>
                     <p>Redeemed on ${escapeHtml(formatDate(reward.redeemedDate))}</p>
@@ -672,6 +672,30 @@ function loadRewards() {
       }
       notify(err.message || "Unable to load rewards.", "error");
     });
+}
+
+function renderRewardIcon(reward) {
+  const category = String(reward?.category || "coupon").toLowerCase();
+  const iconMap = {
+    checkup: "+",
+    health: "+",
+    discount: "%",
+    supplement: "Fe",
+    priority: "P1",
+    digital: "App",
+    kit: "Kit",
+    cash: "Rs",
+    voucher: "GV",
+    food: "FV",
+    points: "Pts",
+    badge: "VIP",
+    certificate: "Cert",
+    entertainment: "Play",
+    education: "Book",
+    coupon: "CP"
+  };
+  const label = iconMap[category] || reward?.icon || "CP";
+  return `<span class="reward-icon-badge reward-icon-badge--${escapeHtml(category)}">${escapeHtml(label)}</span>`;
 }
 
 function flashRewardArea() {

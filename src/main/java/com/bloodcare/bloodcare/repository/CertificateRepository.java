@@ -19,6 +19,8 @@ public interface CertificateRepository extends JpaRepository<Certificate, Long> 
     
     Certificate findByCertificateNumber(String certificateNumber);
 
+    Certificate findByVisitRequest(VisitRequest visitRequest);
+
     boolean existsByVisitRequest(VisitRequest visitRequest);
 
     void deleteByDonor(Donor donor);

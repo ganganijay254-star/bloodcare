@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import com.bloodcare.bloodcare.entity.User;
 import com.bloodcare.bloodcare.entity.Donor;
 import com.bloodcare.bloodcare.entity.VisitRequest;
 import com.bloodcare.bloodcare.entity.Certificate;
+import com.bloodcare.bloodcare.entity.Reward;
 import com.bloodcare.bloodcare.entity.Hospital;
 import com.bloodcare.bloodcare.entity.BloodBank;
 import com.bloodcare.bloodcare.entity.BloodStock;
@@ -51,6 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequestMapping("/api/admin")
 public class AdminController {
     private static final List<String> BLOOD_GROUP_ORDER = List.of("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-");
+    private static final String REWARD_STATUS_ACTIVE = "ACTIVE";
     private static final Map<String, Object> ADMIN_SETTINGS = new HashMap<>();
     private static final Map<String, Boolean> USER_PANEL_CONTROLS = new HashMap<>();
 
@@ -421,6 +424,8 @@ public class AdminController {
                     map.put("status", v.getStatus());
                     map.put("requestDate", v.getRequestDate());
                     map.put("requestType", v.getRequestType());
+                    map.put("certificateGenerated", certificateRepository.existsByVisitRequest(v));
+                    map.put("rewardGenerated", rewardRepository.existsByVisitRequest(v));
                     return map;
                 })
                 .collect(Collectors.toList());
@@ -468,11 +473,6 @@ public class AdminController {
             if ("APPROVED".equalsIgnoreCase(status)) {
                 System.out.println("Sending approval email to: " + email);
                 emailService.sendVisitApprovalEmail(email, name, hospital);
-
-                // Create certificate for donor visits. Older rows may not have requestType set.
-                if (!"RECEIVER".equalsIgnoreCase(visit.getRequestType())) {
-                    createDonationCertificate(visit);
-                }
             }
 
             if ("REJECTED".equalsIgnoreCase(status)) {
@@ -488,12 +488,42 @@ public class AdminController {
         return ResponseEntity.ok("Visit status updated successfully");
     }
 
+    @PostMapping("/visit/{id}/generate-benefits")
+    public ResponseEntity<?> generateVisitBenefits(@PathVariable Long id, HttpSession session) {
+        if (session.getAttribute("admin") == null) {
+            return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
+        }
+
+        VisitRequest visit = visitRequestRepository.findById(id).orElse(null);
+        if (visit == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Visit not found"));
+        }
+        if ("RECEIVER".equalsIgnoreCase(visit.getRequestType())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Benefits can be generated only for donor visits"));
+        }
+        if (!"APPROVED".equalsIgnoreCase(visit.getStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Approve this visit before generating certificate and redeem code"));
+        }
+
+        Certificate certificate = createDonationCertificate(visit);
+        Reward reward = createVisitReward(visit);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Certificate and redeem code generated");
+        response.put("certificateGenerated", certificate != null);
+        response.put("rewardGenerated", reward != null);
+        response.put("certificateNumber", certificate != null ? certificate.getCertificateNumber() : null);
+        response.put("rewardCode", reward != null ? reward.getRewardCode() : null);
+        return ResponseEntity.ok(response);
+    }
+
     /* ================= CREATE DONATION CERTIFICATE ================= */
-    private void createDonationCertificate(VisitRequest visit) {
+    private Certificate createDonationCertificate(VisitRequest visit) {
         try {
-            if (certificateRepository.existsByVisitRequest(visit)) {
+            Certificate existing = certificateRepository.findByVisitRequest(visit);
+            if (existing != null) {
                 System.out.println("Certificate already exists for visit: " + visit.getId());
-                return;
+                return existing;
             }
 
             // Find donor by user
@@ -501,7 +531,7 @@ public class AdminController {
             
             if (donor == null) {
                 System.out.println("Donor not found for user: " + visit.getUser().getId());
-                return;
+                return null;
             }
 
             Certificate certificate = new Certificate();
@@ -523,12 +553,38 @@ public class AdminController {
             String qrCodeData = "/verify-certificate?cert=" + certificateNumber;
             certificate.setQrCode(qrCodeData);
             
-            certificateRepository.save(certificate);
+            certificate = certificateRepository.save(certificate);
             System.out.println("Certificate created: " + certificateNumber);
+            return certificate;
             
         } catch (Exception e) {
             System.out.println("Certificate creation failed: " + e.getMessage());
+            return null;
         }
+    }
+
+    private Reward createVisitReward(VisitRequest visit) {
+        Reward existing = rewardRepository.findByVisitRequest(visit);
+        if (existing != null) {
+            return existing;
+        }
+
+        Reward reward = new Reward();
+        reward.setUser(visit.getUser());
+        reward.setVisitRequest(visit);
+        reward.setTitle("Donation Reward Coupon");
+        reward.setDescription("Redeem coupon unlocked by admin after approved donation visit");
+        reward.setRewardCode(generateRewardCode());
+        reward.setCategory("coupon");
+        reward.setIcon("CP");
+        reward.setValue(Math.max(100, visit.getUnits() * 100));
+        reward.setStatus(REWARD_STATUS_ACTIVE);
+        reward.setCreatedDate(LocalDateTime.now());
+        return rewardRepository.save(reward);
+    }
+
+    private String generateRewardCode() {
+        return "RC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     /* ================= NORMAL USERS ================= */

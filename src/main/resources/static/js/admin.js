@@ -701,6 +701,9 @@ function loadAllRequests() {
 
         const isPending =
           r.status && r.status.toUpperCase() === "PENDING";
+        const isApproved =
+          r.status && r.status.toUpperCase() === "APPROVED";
+        const benefitsGenerated = r.certificateGenerated && r.rewardGenerated;
 
         // Dashboard (NO button)
         visitBody.innerHTML += `
@@ -737,6 +740,9 @@ function loadAllRequests() {
                   Reject
                 </button>
               ` : ""}
+              <button class="action-btn generate" ${(!isApproved || benefitsGenerated) ? "disabled" : ""} onclick="generateVisitBenefits(${r.id})">
+                ${benefitsGenerated ? "Generated" : "Generate"}
+              </button>
             </td>
           </tr>`;
       });
@@ -1069,6 +1075,37 @@ function updateStatus(id, status) {
     showToast('Request updated', 'success');
   })
   .catch(err => { showLoader(false); showToast('Failed to update request', 'error'); });
+}
+
+function generateVisitBenefits(id) {
+  showLoader(true);
+  fetch(`/api/admin/visit/${id}/generate-benefits`, {
+    method: "POST",
+    credentials: "include"
+  })
+  .then(async res => {
+    const text = await res.text();
+    let payload = {};
+    try {
+      payload = text ? JSON.parse(text) : {};
+    } catch (e) {
+      payload = { message: text };
+    }
+    if (!res.ok) {
+      throw new Error(payload.message || "Failed to generate certificate and redeem code");
+    }
+    return payload;
+  })
+  .then(payload => {
+    showLoader(false);
+    loadAllRequests();
+    const codeText = payload.rewardCode ? ` Redeem code: ${payload.rewardCode}` : "";
+    showToast((payload.message || "Generated successfully") + codeText, "success", 5000);
+  })
+  .catch(err => {
+    showLoader(false);
+    showToast(err.message || "Failed to generate certificate and redeem code", "error");
+  });
 }
 
 /* ================= LOGOUT ================= */
