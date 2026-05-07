@@ -36,38 +36,49 @@ function enhanceNavbar(navbar, index) {
   if (navbar.dataset.enhanced === "true") return;
   navbar.dataset.enhanced = "true";
 
-  const brand = document.createElement("div");
-  brand.className = "navbar__brand";
+  let brand = navbar.querySelector(":scope > .navbar__brand");
+  if (!brand) {
+    brand = document.createElement("div");
+    brand.className = "navbar__brand";
 
-  const logo = navbar.querySelector(".logo");
-  if (logo) {
-    brand.appendChild(logo);
+    const logo = navbar.querySelector(".logo");
+    if (logo) {
+      brand.appendChild(logo);
+    }
   }
 
   const menuId = nav.id || `site-nav-${index + 1}`;
   nav.id = menuId;
 
-  const menuWrap = document.createElement("div");
-  menuWrap.className = "nav-menu";
-  nav.parentNode.insertBefore(menuWrap, nav);
-  menuWrap.appendChild(nav);
+  let menuWrap = navbar.querySelector(":scope > .nav-menu");
+  if (!menuWrap) {
+    menuWrap = document.createElement("div");
+    menuWrap.className = "nav-menu";
+    nav.parentNode.insertBefore(menuWrap, nav);
+    menuWrap.appendChild(nav);
+  }
 
-  const toggle = document.createElement("button");
-  toggle.type = "button";
-  toggle.className = "nav-toggle";
-  toggle.setAttribute("aria-label", "Toggle navigation");
+  let toggle = brand.querySelector(".nav-toggle");
+  if (!toggle) {
+    toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "nav-toggle";
+    toggle.setAttribute("aria-label", "Toggle navigation");
+    toggle.innerHTML = `
+      <span class="nav-toggle__icon" aria-hidden="true">
+        <span class="nav-toggle__line"></span>
+        <span class="nav-toggle__line"></span>
+        <span class="nav-toggle__line"></span>
+      </span>
+    `;
+    brand.appendChild(toggle);
+  }
+
   toggle.setAttribute("aria-expanded", "false");
   toggle.setAttribute("aria-controls", menuId);
-  toggle.innerHTML = `
-    <span class="nav-toggle__icon" aria-hidden="true">
-      <span class="nav-toggle__line"></span>
-      <span class="nav-toggle__line"></span>
-      <span class="nav-toggle__line"></span>
-    </span>
-  `;
-
-  brand.appendChild(toggle);
-  navbar.insertBefore(brand, menuWrap);
+  if (brand.parentElement !== navbar) {
+    navbar.insertBefore(brand, menuWrap);
+  }
   navbar.classList.add("has-collapsible-nav");
   navbar.classList.toggle("has-mobile-nav", nav.children.length > 1);
 

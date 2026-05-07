@@ -611,11 +611,22 @@
 
 .reward-card {
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
   gap: 0.8rem;
-  padding: 1rem;
-  border-radius: 1.2rem;
-  border: 1px solid rgba(93, 24, 33, 0.1);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 239, 231, 0.96));
+  padding: 1.05rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(93, 24, 33, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(250, 243, 238, 0.94));
+  box-shadow: 0 10px 22px rgba(93, 24, 33, 0.07);
+  animation: rewardCardIn 260ms ease both;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.reward-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(138, 36, 49, 0.18);
+  box-shadow: 0 16px 30px rgba(93, 24, 33, 0.1);
 }
 
 .reward-card--redeemed {
@@ -623,28 +634,21 @@
 }
 
 .reward-card__icon {
-  font-size: 0;
+  grid-row: span 3;
 }
 
 .reward-icon-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.8rem;
-  height: 2.8rem;
+  width: 3rem;
+  height: 3rem;
   border-radius: 0.85rem;
   background: linear-gradient(135deg, rgba(138, 36, 49, 0.1), rgba(43, 125, 88, 0.1));
   color: var(--brand-deep);
-}
-
-.reward-icon-badge svg {
-  width: 1.45rem;
-  height: 1.45rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-size: 1.45rem;
+  line-height: 1;
 }
 
 .reward-icon-badge--checkup,
@@ -673,6 +677,7 @@
 .reward-card h4 {
   color: var(--brand-deep);
   font-size: 1.15rem;
+  line-height: 1.25;
 }
 
 .reward-card p,
@@ -681,6 +686,7 @@
 }
 
 .reward-code {
+  grid-column: 1 / -1;
   padding: 0.75rem;
   border-radius: 0.9rem;
   background: rgba(138, 36, 49, 0.08);
@@ -691,6 +697,7 @@
 }
 
 .reward-status {
+  grid-column: 1 / -1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -704,6 +711,7 @@
 }
 
 .reward-card__actions {
+  grid-column: 1 / -1;
   display: flex;
   gap: 0.6rem;
 }
@@ -721,6 +729,28 @@
   border: 1px dashed rgba(93, 24, 33, 0.16);
   color: var(--ink-soft);
   text-align: center;
+}
+
+@keyframes rewardCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reward-card {
+    animation: none;
+    transition: none;
+  }
+
+  .reward-card:hover {
+    transform: none;
+  }
 }
 
 @media (max-width: 1080px) {

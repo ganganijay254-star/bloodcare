@@ -10,16 +10,27 @@
 </head>
 <body>
 <div class="page-bg dashboard-page">
-  <header class="navbar">
-    <div class="logo">BloodCare</div>
-    <nav class="dashboard-nav">
-      <a th:href="@{/}">Home</a>
-      <a th:href="@{/medicine}">Medicines</a>
-      <a th:href="@{/leaderboard}">Leaderboard</a>
-      <a th:href="@{/about}">About</a>
-      <a th:href="@{/donor-profile}">My Profile</a>
-      <button class="btn btn-ghost logout-btn" onclick="logout()">Logout</button>
-    </nav>
+  <header class="navbar has-collapsible-nav has-mobile-nav">
+    <div class="navbar__brand">
+      <div class="logo">BloodCare</div>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="donor-dashboard-nav">
+        <span class="nav-toggle__icon" aria-hidden="true">
+          <span class="nav-toggle__line"></span>
+          <span class="nav-toggle__line"></span>
+          <span class="nav-toggle__line"></span>
+        </span>
+      </button>
+    </div>
+    <div class="nav-menu">
+      <nav class="dashboard-nav" id="donor-dashboard-nav">
+        <a th:href="@{/}">Home</a>
+        <a th:href="@{/medicine}">Medicines</a>
+        <a th:href="@{/leaderboard}">Leaderboard</a>
+        <a th:href="@{/about}">About</a>
+        <a th:href="@{/donor-profile}">My Profile</a>
+        <button class="btn btn-ghost logout-btn" onclick="logout()">Logout</button>
+      </nav>
+    </div>
   </header>
 
   <section class="dashboard-wrapper">
@@ -275,8 +286,8 @@
     </main>
   </section>
 </div>
-<script th:src="@{/js/chatbot-widget.js}"></script>
 <script th:src="@{/js/main.js}"></script>
 <script th:src="@{/js/toast.js}"></script>
+<script th:src="@{/js/chatbot-widget.js}" defer></script>
 </body>
 </html>

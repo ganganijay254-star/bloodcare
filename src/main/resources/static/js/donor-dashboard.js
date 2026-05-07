@@ -676,25 +676,25 @@ function loadRewards() {
 
 function renderRewardIcon(reward) {
   const category = String(reward?.category || "coupon").toLowerCase();
-  const icons = {
-    checkup: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l1 3h3v15H4V6h3l1-3Z"/><path d="M12 9v6M9 12h6"/></svg>',
-    health: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 5.6a5 5 0 0 0-7.1 0L12 6.9l-1.3-1.3a5 5 0 1 0-7.1 7.1L12 21l8.4-8.3a5 5 0 0 0 0-7.1Z"/><path d="M12 9v5M9.5 11.5h5"/></svg>',
-    discount: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13 13 20 4 11V4h7l9 9Z"/><path d="M8 8h.01M9 15l6-6"/></svg>',
-    supplement: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 4.5 4.7 10.3a4.1 4.1 0 0 0 5.8 5.8l5.8-5.8a4.1 4.1 0 0 0-5.8-5.8Z"/><path d="m8 13 5-5"/></svg>',
-    priority: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v6c0 4 3.4 6.8 8 8 4.6-1.2 8-4 8-8V7l-8-4Z"/><path d="M12 8v5M12 16h.01"/></svg>',
-    digital: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.8" width="10" height="18.4" rx="2"/><path d="M10.5 18h3"/></svg>',
-    kit: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6V4h6v2M4 7h16v13H4V7Z"/><path d="M12 10v6M9 13h6"/></svg>',
-    cash: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M17 14h.01M12 9.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z"/></svg>',
-    voucher: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a2 2 0 0 1 0-4V5H4v3a2 2 0 0 1 0 4v7h16v-7Z"/><path d="M9 8h6M9 16h6M12 5v14"/></svg>',
-    food: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v8M9 3v8M6 7h3M7.5 11v10M17 3v18M14 3v7a3 3 0 0 0 3 3"/></svg>',
-    points: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg>',
-    badge: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z"/><path d="m8.5 14.5-1 6 4.5-2.4 4.5 2.4-1-6"/></svg>',
-    certificate: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5V3Z"/><path d="M8 8h8M8 12h5M15 17l1 1 2-3"/></svg>',
-    entertainment: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z"/></svg>',
-    education: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M8 7h8M8 11h6"/></svg>',
-    coupon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a2.3 2.3 0 0 1 0-4.6V5H4v2.4a2.3 2.3 0 0 1 0 4.6V19h16v-7Z"/><path d="M9 9h6M9 15h6M12 5v14"/></svg>'
+  const emojiMap = {
+    checkup: "🩺",
+    health: "🩸",
+    discount: "🏷️",
+    supplement: "💊",
+    priority: "🛡️",
+    digital: "📱",
+    kit: "🎒",
+    cash: "💵",
+    voucher: "🎟️",
+    food: "🍽️",
+    points: "⭐",
+    badge: "🏅",
+    certificate: "📜",
+    entertainment: "🎧",
+    education: "📚",
+    coupon: "🎁"
   };
-  return `<span class="reward-icon-badge reward-icon-badge--${escapeHtml(category)}">${icons[category] || icons.coupon}</span>`;
+  return `<span class="reward-icon-badge reward-icon-badge--${escapeHtml(category)}" aria-hidden="true">${emojiMap[category] || emojiMap.coupon}</span>`;
 }
 
 function flashRewardArea() {
