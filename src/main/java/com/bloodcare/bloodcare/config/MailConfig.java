@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
-@Configuration
+//@Configuration
 public class MailConfig {
 
     @Value("${spring.mail.host:smtp.gmail.com}")
