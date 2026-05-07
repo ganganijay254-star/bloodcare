@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.MailException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -191,6 +192,8 @@ public class AuthController {
             emailService.sendResetLink(user.getEmail(), resetLink);
         } catch (IllegalStateException ex) {
             return ResponseEntity.status(503).body(message("Password reset email is not configured right now. Please contact support."));
+        } catch (MailException ex) {
+            return ResponseEntity.status(503).body(message(emailService.describeEmailFailure(ex)));
         } catch (Exception ex) {
             return ResponseEntity.status(500).body(message(emailService.describeEmailFailure(ex)));
         }

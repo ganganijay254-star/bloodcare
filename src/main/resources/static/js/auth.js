@@ -227,7 +227,7 @@ async function sendReset() {
   setFieldState("", "forgotEmailError", "");
 
   try {
-    const res = await fetch(`/api/auth/forgot-password?email=${email}`, {
+    const res = await fetch(`/api/auth/forgot-password?email=${encodeURIComponent(email)}`, {
       method: "POST"
     });
 

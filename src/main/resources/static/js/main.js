@@ -11,6 +11,123 @@ function setActiveNavLink(nav) {
   });
 }
 
+const SITE_NAV_BASE_URL = "/api/auth";
+let siteNavConfigPromise = null;
+let siteNavSessionPromise = null;
+
+function siteNavCheckSession() {
+  if (!siteNavSessionPromise) {
+    siteNavSessionPromise = fetch(`${SITE_NAV_BASE_URL}/check-session`, { credentials: "include" }).catch(() => null);
+  }
+  return siteNavSessionPromise;
+}
+
+function siteNavLoadConfig() {
+  if (!siteNavConfigPromise) {
+    siteNavConfigPromise = fetch("/api/admin/public-config")
+      .then((response) => {
+        if (!response.ok) throw new Error("config");
+        return response.json();
+      })
+      .catch(() => ({ settings: {}, controls: {} }));
+  }
+  return siteNavConfigPromise;
+}
+
+function siteNavControlOn(config, flag, fallback = true) {
+  const controls = config && config.controls ? config.controls : {};
+  if (controls[flag] === undefined || controls[flag] === null) return fallback;
+  return controls[flag] !== false;
+}
+
+function siteNavLogout() {
+  const doLogout = () => {
+    fetch(`${SITE_NAV_BASE_URL}/logout`, { method: "POST", credentials: "include" }).finally(() => {
+      window.location.href = "/";
+    });
+  };
+
+  if (typeof showConfirm === "function") {
+    showConfirm("Are you sure you want to logout?", doLogout);
+    return;
+  }
+
+  if (window.confirm("Are you sure you want to logout?")) {
+    doLogout();
+  }
+}
+
+function ensureNavbarShell(navbar) {
+  if (!navbar) return null;
+
+  let logo = navbar.querySelector(".logo");
+  if (!logo) {
+    logo = document.createElement("div");
+    logo.className = "logo";
+    logo.textContent = "BloodCare";
+  }
+
+  let nav = navbar.querySelector("nav");
+  if (!nav) {
+    nav = document.createElement("nav");
+    nav.setAttribute("data-site-nav", "");
+    navbar.appendChild(nav);
+  }
+
+  if (!navbar.querySelector(".logo")) {
+    navbar.insertBefore(logo, nav);
+  }
+
+  return nav;
+}
+
+function navbarNeedsLinks(nav) {
+  if (!nav) return false;
+  return nav.children.length === 0 || nav.hasAttribute("data-site-nav") || nav.id === "mainNav";
+}
+
+function renderSiteNavigation(nav, sessionResponse, config) {
+  if (!navbarNeedsLinks(nav)) return;
+
+  const links = [
+    '<a href="/">Home</a>',
+    '<a href="/about">About</a>'
+  ];
+
+  if (sessionResponse && sessionResponse.status === 200) {
+    links.splice(1, 0, '<a href="/donor-dashboard">Dashboard</a>');
+    if (siteNavControlOn(config, "showLeaderboard", true)) links.push('<a href="/leaderboard">Leaderboard</a>');
+    if (siteNavControlOn(config, "showMedicine", true)) links.push('<a href="/medicine">Medicines</a>');
+    if (siteNavControlOn(config, "showDonorProfile", true)) links.push('<a href="/donor-profile">My Profile</a>');
+    links.push('<button class="btn btn-small" type="button" data-site-logout>Logout</button>');
+  } else {
+    links.push('<a href="/login">Login</a>');
+  }
+
+  nav.innerHTML = links.join("");
+  const logoutButton = nav.querySelector("[data-site-logout]");
+  if (logoutButton) logoutButton.addEventListener("click", siteNavLogout);
+  setActiveNavLink(nav);
+}
+
+async function hydrateSiteNavigation(navbars) {
+  const managedNavs = navbars.map(ensureNavbarShell).filter(navbarNeedsLinks);
+  if (!managedNavs.length) return;
+
+  let sessionResponse = null;
+  let config = { settings: {}, controls: {} };
+
+  try {
+    const results = await Promise.all([siteNavCheckSession(), siteNavLoadConfig()]);
+    sessionResponse = results[0];
+    config = results[1] || config;
+  } catch (e) {
+    sessionResponse = null;
+  }
+
+  managedNavs.forEach((nav) => renderSiteNavigation(nav, sessionResponse, config));
+}
+
 function closeResponsiveNav(navbar, toggle) {
   if (!navbar || !toggle) return;
   navbar.classList.remove("is-open");
@@ -33,7 +150,10 @@ function enhanceNavbar(navbar, index) {
 
   setActiveNavLink(nav);
 
-  if (navbar.dataset.enhanced === "true") return;
+  if (navbar.dataset.enhanced === "true") {
+    navbar.classList.toggle("has-mobile-nav", nav.children.length > 1);
+    return;
+  }
   navbar.dataset.enhanced = "true";
 
   let brand = navbar.querySelector(":scope > .navbar__brand");
@@ -121,6 +241,9 @@ function enhanceNavbar(navbar, index) {
 
 document.addEventListener("DOMContentLoaded", () => {
   const navbars = Array.from(document.querySelectorAll(".navbar"));
+  hydrateSiteNavigation(navbars).then(() => {
+    navbars.forEach(enhanceNavbar);
+  });
   navbars.forEach(enhanceNavbar);
 
   document.querySelectorAll(".activity-table").forEach((table) => {
