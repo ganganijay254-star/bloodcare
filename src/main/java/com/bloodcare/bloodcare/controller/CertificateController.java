@@ -4,8 +4,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 import java.net.InetAddress;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,10 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bloodcare.bloodcare.entity.Certificate;
 import com.bloodcare.bloodcare.entity.Donor;
 import com.bloodcare.bloodcare.entity.User;
-import com.bloodcare.bloodcare.entity.VisitRequest;
 import com.bloodcare.bloodcare.repository.CertificateRepository;
 import com.bloodcare.bloodcare.repository.DonorRepository;
-import com.bloodcare.bloodcare.repository.VisitRequestRepository;
 
 @RestController
 @RequestMapping("/api/certificate")
@@ -40,9 +36,6 @@ public class CertificateController {
     @Autowired
     private DonorRepository donorRepository;
 
-    @Autowired
-    private VisitRequestRepository visitRequestRepository;
-
     @GetMapping("/my-certificates")
     public ResponseEntity<?> getMyCertificates(HttpSession session) {
         User user = (User) session.getAttribute("user");
@@ -51,13 +44,11 @@ public class CertificateController {
         }
 
         try {
-            ensureCertificatesForApprovedVisits(user);
             List<Certificate> certificates = certificateRepository.findByDonorUserOrderByCreatedDateDesc(user);
             return ResponseEntity.ok(certificates);
         } catch (Exception e) {
             Donor donor = donorRepository.findByUser(user);
             if (donor != null) {
-                ensureCertificatesForApprovedVisits(user);
                 List<Certificate> certificates = certificateRepository.findByDonor(donor);
                 certificates.sort(Comparator.comparing(Certificate::getCreatedDate, Comparator.nullsLast(Comparator.reverseOrder())));
                 return ResponseEntity.ok(certificates);
@@ -136,38 +127,6 @@ public class CertificateController {
         }
 
         return ResponseEntity.ok(base.toString());
-    }
-
-    private void ensureCertificatesForApprovedVisits(User user) {
-        Donor donor = donorRepository.findByUser(user);
-        if (donor == null) {
-            return;
-        }
-
-        List<VisitRequest> approvedVisits = visitRequestRepository.findByUserAndStatus(user, "APPROVED");
-        for (VisitRequest visit : approvedVisits) {
-            if ("RECEIVER".equalsIgnoreCase(visit.getRequestType())) {
-                continue;
-            }
-            if (certificateRepository.existsByVisitRequest(visit)) {
-                continue;
-            }
-
-            String certificateNumber = "CERT-" + visit.getId() + "-" + System.currentTimeMillis();
-
-            Certificate certificate = new Certificate();
-            certificate.setDonor(donor);
-            certificate.setVisitRequest(visit);
-            certificate.setCertificateNumber(certificateNumber);
-            certificate.setHospitalName(visit.getHospitalName());
-            certificate.setUnits(visit.getUnits());
-            certificate.setDonationDate(visit.getVisitDate() != null
-                    ? visit.getVisitDate()
-                    : (visit.getRequestDate() != null ? visit.getRequestDate() : LocalDate.now()));
-            certificate.setCreatedDate(LocalDateTime.now());
-            certificate.setQrCode("/verify-certificate?cert=" + certificateNumber);
-            certificateRepository.save(certificate);
-        }
     }
 
     private Map<String, Object> toCertificatePayload(Certificate certificate) {

@@ -623,21 +623,51 @@
 }
 
 .reward-card__icon {
-  font-size: 0.78rem;
+  font-size: 0;
 }
 
 .reward-icon-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.4rem;
-  height: 2.4rem;
-  border-radius: 0.7rem;
-  background: rgba(138, 36, 49, 0.1);
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 0.85rem;
+  background: linear-gradient(135deg, rgba(138, 36, 49, 0.1), rgba(43, 125, 88, 0.1));
   color: var(--brand-deep);
-  font-weight: 900;
-  letter-spacing: 0;
-  line-height: 1;
+}
+
+.reward-icon-badge svg {
+  width: 1.45rem;
+  height: 1.45rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.reward-icon-badge--checkup,
+.reward-icon-badge--health,
+.reward-icon-badge--supplement,
+.reward-icon-badge--kit {
+  color: #2b7d58;
+  background: rgba(43, 125, 88, 0.11);
+}
+
+.reward-icon-badge--discount,
+.reward-icon-badge--voucher,
+.reward-icon-badge--coupon,
+.reward-icon-badge--cash {
+  color: #8a2431;
+  background: rgba(138, 36, 49, 0.1);
+}
+
+.reward-icon-badge--badge,
+.reward-icon-badge--points,
+.reward-icon-badge--priority {
+  color: #8a5a00;
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .reward-card h4 {
