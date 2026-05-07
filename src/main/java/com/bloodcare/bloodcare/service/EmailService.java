@@ -4,7 +4,6 @@ import com.bloodcare.bloodcare.entity.BloodRequest;
 import com.bloodcare.bloodcare.entity.BloodStock;
 import com.bloodcare.bloodcare.entity.Donor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -19,12 +18,7 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    @Value("${spring.mail.username:}")
-    private String mailUsername;
-
-    @Value("${spring.mail.password:}")
-    private String mailPassword;
-
+  
     public void sendResetLink(String toEmail, String link) {
         ensureEmailConfigured();
         SimpleMailMessage message = new SimpleMailMessage();
@@ -196,8 +190,7 @@ public class EmailService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
         applyFrom(message);
-        System.out.println("FROM: " + normalizedUsername());
-        System.out.println("TO: " + email);
+       
         message.setSubject("BloodCare - Blood Request Approved (" + safe(request.getPublicId(), "Request") + ")");
 
         String status = safe(request.getStatus(), "OPEN").toUpperCase();
@@ -276,52 +269,33 @@ public class EmailService {
         mailSender.send(message);
     }
 
-    public boolean isEmailConfigured() {
-        return isPresent(normalizedUsername()) && isPresent(normalizedPassword());
-    }
+  public boolean isEmailConfigured() {
+    return true;
+}
 
-    private void ensureEmailConfigured() {
-        if (!isEmailConfigured()) {
-            throw new IllegalStateException("Email is not configured. Set SPRING_MAIL_USERNAME and SPRING_MAIL_PASSWORD before sending mail.");
-        }
-    }
+  private void ensureEmailConfigured() {
 
-    private void applyFrom(SimpleMailMessage message) {
-        String from = normalizedUsername();
+}
 
-        if (from == null || from.isBlank()) {
-            from = "bloodcares.app@gmail.com";
-        }
-
-        message.setFrom(from);
-    }
+private void applyFrom(SimpleMailMessage message) {
+    message.setFrom("bloodcares.app@gmail.com");
+}
 
     public String describeEmailFailure(Exception exception) {
-        if (exception instanceof IllegalStateException) {
-            return exception.getMessage();
-        }
-        if (exception instanceof MailException) {
-            return "Email login failed. Verify SPRING_MAIL_USERNAME, SPRING_MAIL_PASSWORD, and Gmail app password settings.";
-        }
-        return exception.getMessage() == null || exception.getMessage().isBlank()
-                ? "Unknown email delivery error"
-                : exception.getMessage();
+
+    if (exception instanceof MailException) {
+        return exception.getMessage();
     }
+
+    return exception.getMessage() == null
+            ? "Email sending failed"
+            : exception.getMessage();
+}
 
     private String safe(String value, String fallback) {
         if (value == null || value.isBlank()) return fallback;
         return value;
     }
 
-    private boolean isPresent(String value) {
-        return value != null && !value.isBlank();
-    }
-
-    private String normalizedUsername() {
-        return mailUsername == null ? "" : mailUsername.trim();
-    }
-
-    private String normalizedPassword() {
-        return mailPassword == null ? "" : mailPassword.replaceAll("\\s+", "");
-    }
+   
 }
