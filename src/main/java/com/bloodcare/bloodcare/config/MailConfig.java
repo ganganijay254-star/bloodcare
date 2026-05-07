@@ -12,7 +12,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 @Configuration
 public class MailConfig {
 
-    @Value("${spring.mail.host:smtp.gmail.com}")
+    @Value("${spring.mail.host:smtp-relay.brevo.com}")
     private String host;
 
     @Value("${spring.mail.port:587}")
@@ -39,7 +39,7 @@ public class MailConfig {
     @Value("${spring.mail.properties.mail.smtp.starttls.required:true}")
     private String startTlsRequired;
 
-    @Value("${spring.mail.properties.mail.smtp.ssl.trust:smtp.gmail.com}")
+    @Value("${spring.mail.properties.mail.smtp.ssl.trust:smtp-relay.brevo.com}")
     private String sslTrust;
 
     @Value("${spring.mail.properties.mail.smtp.connectiontimeout:5000}")
@@ -54,7 +54,9 @@ public class MailConfig {
     @Bean
     @Primary
     public JavaMailSender javaMailSender() {
+
         JavaMailSenderImpl sender = new JavaMailSenderImpl();
+
         sender.setHost(normalize(host));
         sender.setPort(port);
         sender.setUsername(normalize(username));
@@ -62,6 +64,7 @@ public class MailConfig {
         sender.setDefaultEncoding(normalize(defaultEncoding));
 
         Properties props = sender.getJavaMailProperties();
+
         props.put("mail.transport.protocol", normalize(transportProtocol));
         props.put("mail.smtp.auth", normalize(smtpAuth));
         props.put("mail.smtp.starttls.enable", normalize(startTlsEnable));
@@ -70,6 +73,7 @@ public class MailConfig {
         props.put("mail.smtp.connectiontimeout", normalize(connectionTimeout));
         props.put("mail.smtp.timeout", normalize(timeout));
         props.put("mail.smtp.writetimeout", normalize(writeTimeout));
+
         return sender;
     }
 
