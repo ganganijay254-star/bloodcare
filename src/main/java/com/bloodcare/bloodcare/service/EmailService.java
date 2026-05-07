@@ -278,7 +278,7 @@ public class EmailService {
 }
 
 private void applyFrom(SimpleMailMessage message) {
-    message.setFrom("bloodcares.app@gmail.com");
+   message.setFrom("a8461d001@smtp-brevo.com");
 }
 
     public String describeEmailFailure(Exception exception) {
