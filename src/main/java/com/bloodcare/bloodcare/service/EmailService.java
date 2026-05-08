@@ -229,32 +229,32 @@ public class EmailService {
         sendMail(message);
     }
 
-    private void sendMail(SimpleMailMessage message) {
+   private void sendMail(SimpleMailMessage message) {
 
-        try {
+    try {
 
-            System.out.println("==================================");
-            System.out.println("Sending email...");
-            System.out.println("TO = " + java.util.Arrays.toString(message.getTo()));
-            System.out.println("FROM = " + message.getFrom());
-            System.out.println("MAIL USER ENV = " + System.getenv("SPRING_MAIL_USERNAME"));
-            System.out.println("MAIL PASS EXISTS = " + (System.getenv("SPRING_MAIL_PASSWORD") != null));
+        System.out.println("==================================");
+        System.out.println("Sending email...");
+        System.out.println("TO = " + java.util.Arrays.toString(message.getTo()));
+        System.out.println("FROM = " + message.getFrom());
+        System.out.println("MAIL USER ENV = " + System.getenv("SPRING_MAIL_USERNAME"));
+        System.out.println("MAIL PASS EXISTS = " + (System.getenv("SPRING_MAIL_PASSWORD") != null));
 
-            mailSender.send(message);
+        mailSender.send(message);
 
-            System.out.println("MAIL SENT SUCCESSFULLY");
-            System.out.println("==================================");
+        System.out.println("MAIL SENT SUCCESSFULLY");
+        System.out.println("==================================");
 
-        } } catch (Exception e) {
+    } catch (Exception e) {
 
-    System.out.println("==================================");
-    System.out.println("MAIL ERROR");
-    e.printStackTrace();
-    System.out.println("==================================");
+        System.out.println("==================================");
+        System.out.println("MAIL ERROR");
+        e.printStackTrace();
+        System.out.println("==================================");
 
-    throw new RuntimeException(e);
-}
+        throw new RuntimeException(e);
     }
+}
 
     public boolean isEmailConfigured() {
         return true;
