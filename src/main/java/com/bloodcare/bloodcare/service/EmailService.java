@@ -9,9 +9,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
 @Service
 public class EmailService {
 
@@ -30,11 +27,14 @@ public class EmailService {
         message.setSubject("BloodCare - Reset Password");
 
         message.setText(
-                "Hello,\n\n"
-                        + "Click the link below to reset your password:\n\n"
+                "Dear User,\n\n"
+                        + "We received a request to reset your BloodCare account password.\n\n"
+                        + "Please click the secure link below to continue:\n\n"
                         + link + "\n\n"
-                        + "If you did not request this, please ignore this email.\n\n"
-                        + "Regards,\nBloodCare Team"
+                        + "This link is valid for a limited time.\n\n"
+                        + "If you did not request this password reset, you can safely ignore this email.\n\n"
+                        + "Regards,\n"
+                        + "BloodCare Support Team"
         );
 
         sendMail(message);
@@ -53,10 +53,12 @@ public class EmailService {
 
         message.setText(
                 "Dear User,\n\n"
-                        + "We received a request to reset your password.\n\n"
-                        + "Click the link below to reset it:\n\n"
+                        + "We received a request to reset your BloodCare account password.\n\n"
+                        + "Click the secure link below to reset your password:\n\n"
                         + resetLink + "\n\n"
-                        + "If you did not request this, please ignore this email.\n\n"
+                        + "For your security, this link will expire after some time.\n\n"
+                        + "If you did not request this reset, please ignore this email.\n\n"
+                        + "Thank you,\n"
                         + "BloodCare Support Team"
         );
 
@@ -75,11 +77,13 @@ public class EmailService {
         message.setSubject("BloodCare - Donation Visit Approved");
 
         message.setText(
-                "Dear " + name + ",\n\n"
-                        + "Your blood donation visit request has been APPROVED.\n\n"
-                        + "Hospital: " + hospital + "\n\n"
-                        + "Please visit on your scheduled time.\n\n"
-                        + "Thank you for saving lives.\n\n"
+                "Dear " + safe(name, "Donor") + ",\n\n"
+                        + "We are pleased to inform you that your blood donation visit request "
+                        + "has been approved successfully.\n\n"
+                        + "Hospital: " + safe(hospital, "-") + "\n\n"
+                        + "Please visit the hospital at your scheduled time and carry a valid ID proof if required.\n\n"
+                        + "Thank you for your valuable contribution toward saving lives.\n\n"
+                        + "Warm Regards,\n"
                         + "BloodCare Team"
         );
 
@@ -98,11 +102,13 @@ public class EmailService {
         message.setSubject("BloodCare - Donation Visit Update");
 
         message.setText(
-                "Dear " + name + ",\n\n"
-                        + "We regret to inform you that your blood donation visit request\n"
-                        + "for hospital: " + hospital + " has been REJECTED.\n\n"
-                        + "You may try again later or contact support.\n\n"
-                        + "Thank you.\n"
+                "Dear " + safe(name, "Donor") + ",\n\n"
+                        + "We regret to inform you that your blood donation visit request "
+                        + "has not been approved at this time.\n\n"
+                        + "Hospital: " + safe(hospital, "-") + "\n\n"
+                        + "You may try again later or contact support for additional information.\n\n"
+                        + "Thank you for your willingness to help others through blood donation.\n\n"
+                        + "Regards,\n"
                         + "BloodCare Team"
         );
 
@@ -118,22 +124,30 @@ public class EmailService {
         message.setTo(email);
         applyFrom(message);
 
-        message.setSubject("BloodCare - New Blood Request Matched");
+        message.setSubject("BloodCare - Urgent Blood Request Match");
 
         message.setText(
                 "Dear " + safe(name, "Donor") + ",\n\n"
-                        + "A nearby blood request matches your donor profile.\n\n"
+                        + "A blood request matching your donor profile has been identified nearby.\n\n"
                         + "Blood Group: " + safe(bloodGroup, "-") + "\n"
                         + "City: " + safe(city, "-") + "\n\n"
-                        + "Please login to BloodCare donor dashboard and respond to the request.\n\n"
-                        + "Thank you for helping save lives.\n\n"
+                        + "Your support could help save a life.\n\n"
+                        + "Please login to your BloodCare donor dashboard and respond if you are available to donate.\n\n"
+                        + "Thank you for your kindness and support.\n\n"
+                        + "Best Regards,\n"
                         + "BloodCare Team"
         );
 
         sendMail(message);
     }
 
-    public void sendApprovedRequestMatchEmail(String email, String donorName, BloodRequest request, String donorBloodGroup, String donorCity) {
+    public void sendApprovedRequestMatchEmail(
+            String email,
+            String donorName,
+            BloodRequest request,
+            String donorBloodGroup,
+            String donorCity
+    ) {
 
         if (email == null || email.isBlank() || request == null) {
             return;
@@ -150,10 +164,12 @@ public class EmailService {
 
         String body =
                 "Dear " + safe(donorName, "Donor") + ",\n\n"
-                        + "A blood request has been approved and matched with your donor profile.\n\n"
+                        + "An approved blood request has been matched with your donor profile.\n\n"
                         + "Blood Group: " + safe(donorBloodGroup, "-") + "\n"
                         + "City: " + safe(donorCity, "-") + "\n\n"
-                        + "Please login and respond.\n\n"
+                        + "We kindly request you to login to BloodCare and respond if you are available to donate.\n\n"
+                        + "Your support can help save someone's life.\n\n"
+                        + "Thank you,\n"
                         + "BloodCare Team";
 
         message.setText(body);
@@ -161,7 +177,12 @@ public class EmailService {
         sendMail(message);
     }
 
-    public void sendDonorAcceptedEmail(String email, String receiverName, BloodRequest request, Donor donor) {
+    public void sendDonorAcceptedEmail(
+            String email,
+            String receiverName,
+            BloodRequest request,
+            Donor donor
+    ) {
 
         ensureEmailConfigured();
 
@@ -174,14 +195,22 @@ public class EmailService {
 
         message.setText(
                 "Dear " + safe(receiverName, "User") + ",\n\n"
-                        + "A donor has accepted your request.\n\n"
-                        + "Regards,\nBloodCare Team"
+                        + "Good news! A donor has accepted your blood request.\n\n"
+                        + "Please login to your BloodCare account to view donor details "
+                        + "and further instructions.\n\n"
+                        + "We wish you a safe and speedy recovery.\n\n"
+                        + "Regards,\n"
+                        + "BloodCare Team"
         );
 
         sendMail(message);
     }
 
-    public void sendBloodRequestApprovalEmail(String email, String receiverName, BloodRequest request) {
+    public void sendBloodRequestApprovalEmail(
+            String email,
+            String receiverName,
+            BloodRequest request
+    ) {
 
         if (email == null || email.isBlank() || request == null) {
             return;
@@ -198,14 +227,23 @@ public class EmailService {
 
         message.setText(
                 "Dear " + safe(receiverName, "User") + ",\n\n"
-                        + "Your blood request has been approved.\n\n"
-                        + "Regards,\nBloodCare Team"
+                        + "Your blood request has been reviewed and approved successfully.\n\n"
+                        + "Our system is now searching for matching donors and available blood banks.\n\n"
+                        + "We will notify you as soon as updates are available.\n\n"
+                        + "Thank you for using BloodCare.\n\n"
+                        + "Regards,\n"
+                        + "BloodCare Team"
         );
 
         sendMail(message);
     }
 
-    public void sendBloodBankAvailableEmail(String email, String receiverName, BloodRequest request, BloodStock stock) {
+    public void sendBloodBankAvailableEmail(
+            String email,
+            String receiverName,
+            BloodRequest request,
+            BloodStock stock
+    ) {
 
         if (email == null || email.isBlank() || request == null || stock == null) {
             return;
@@ -222,39 +260,44 @@ public class EmailService {
 
         message.setText(
                 "Dear " + safe(receiverName, "User") + ",\n\n"
-                        + "Blood is available from blood bank.\n\n"
-                        + "Regards,\nBloodCare Team"
+                        + "We are happy to inform you that the requested blood is currently available "
+                        + "at a connected blood bank.\n\n"
+                        + "Please login to your BloodCare account to view complete details and next steps.\n\n"
+                        + "We hope this helps you receive timely support.\n\n"
+                        + "Best Regards,\n"
+                        + "BloodCare Team"
         );
 
         sendMail(message);
     }
 
-   private void sendMail(SimpleMailMessage message) {
+    private void sendMail(SimpleMailMessage message) {
 
-    try {
+        try {
 
-        System.out.println("==================================");
-        System.out.println("Sending email...");
-        System.out.println("TO = " + java.util.Arrays.toString(message.getTo()));
-        System.out.println("FROM = " + message.getFrom());
-        System.out.println("MAIL USER ENV = " + System.getenv("SPRING_MAIL_USERNAME"));
-        System.out.println("MAIL PASS EXISTS = " + (System.getenv("SPRING_MAIL_PASSWORD") != null));
+            System.out.println("==================================");
+            System.out.println("Sending email...");
+            System.out.println("TO = " + java.util.Arrays.toString(message.getTo()));
+            System.out.println("FROM = " + message.getFrom());
+            System.out.println("MAIL USER ENV = " + System.getenv("SPRING_MAIL_USERNAME"));
+            System.out.println("MAIL PASS EXISTS = "
+                    + (System.getenv("SPRING_MAIL_PASSWORD") != null));
 
-        mailSender.send(message);
+            mailSender.send(message);
 
-        System.out.println("MAIL SENT SUCCESSFULLY");
-        System.out.println("==================================");
+            System.out.println("MAIL SENT SUCCESSFULLY");
+            System.out.println("==================================");
 
-    } catch (Exception e) {
+        } catch (Exception e) {
 
-        System.out.println("==================================");
-        System.out.println("MAIL ERROR");
-        e.printStackTrace();
-        System.out.println("==================================");
+            System.out.println("==================================");
+            System.out.println("MAIL ERROR");
+            e.printStackTrace();
+            System.out.println("==================================");
 
-        throw new RuntimeException(e);
+            throw new RuntimeException(e);
+        }
     }
-}
 
     public boolean isEmailConfigured() {
         return true;
@@ -264,9 +307,9 @@ public class EmailService {
 
     }
 
-   private void applyFrom(SimpleMailMessage message) {
-    message.setFrom("bloodcares.app@gmail.com");
-}
+    private void applyFrom(SimpleMailMessage message) {
+        message.setFrom("bloodcares.app@gmail.com");
+    }
 
     public String describeEmailFailure(Exception exception) {
 
