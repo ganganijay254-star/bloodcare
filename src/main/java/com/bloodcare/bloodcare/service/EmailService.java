@@ -245,13 +245,15 @@ public class EmailService {
             System.out.println("MAIL SENT SUCCESSFULLY");
             System.out.println("==================================");
 
-        } catch (Exception e) {
+        } } catch (Exception e) {
 
-            System.out.println("==================================");
-            System.out.println("MAIL ERROR");
-            e.printStackTrace();
-            System.out.println("==================================");
-        }
+    System.out.println("==================================");
+    System.out.println("MAIL ERROR");
+    e.printStackTrace();
+    System.out.println("==================================");
+
+    throw new RuntimeException(e);
+}
     }
 
     public boolean isEmailConfigured() {
@@ -262,9 +264,9 @@ public class EmailService {
 
     }
 
-    private void applyFrom(SimpleMailMessage message) {
-        message.setFrom("a8461d001@smtp-brevo.com");
-    }
+   private void applyFrom(SimpleMailMessage message) {
+    message.setFrom("bloodcares.app@gmail.com");
+}
 
     public String describeEmailFailure(Exception exception) {
 
